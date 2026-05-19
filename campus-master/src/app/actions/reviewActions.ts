@@ -36,6 +36,7 @@ export async function submitReviewAction(formData: FormData) {
 
     revalidatePath(`/tasks/${parsed.data.taskId}`);
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
 }
 
 export async function submitReviewWithStateAction(
@@ -76,5 +77,6 @@ export async function submitReviewWithStateAction(
 
     revalidatePath(`/tasks/${parsed.data.taskId}`);
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
     return { error: null, ok: true };
 }

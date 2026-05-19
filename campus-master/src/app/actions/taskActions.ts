@@ -40,6 +40,7 @@ export async function topUpAction(formData: FormData) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
 }
 
 export async function topUpWithStateAction(
@@ -72,6 +73,7 @@ export async function topUpWithStateAction(
     }
 
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
     return { error: null, ok: true };
 }
 
@@ -199,6 +201,7 @@ export async function acceptTaskWithStateAction(
     revalidatePath(`/tasks/${taskId}`);
     revalidatePath("/tasks");
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
     return { error: null, ok: true };
 }
 
@@ -266,6 +269,7 @@ export async function submitEvidenceWithStateAction(
 
     revalidatePath(`/tasks/${taskId}`);
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
     return { error: null, ok: true };
 }
 
@@ -279,6 +283,7 @@ export async function confirmCompletionAction(formData: FormData) {
 
     revalidatePath(`/tasks/${taskId}`);
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
 }
 
 export async function confirmCompletionWithStateAction(
@@ -309,6 +314,7 @@ export async function confirmCompletionWithStateAction(
 
     revalidatePath(`/tasks/${taskId}`);
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
     return { error: null, ok: true };
 }
 
@@ -383,6 +389,7 @@ export async function cancelTaskAction(formData: FormData) {
     revalidatePath(`/tasks/${parsed.data.taskId}`);
     revalidatePath("/tasks");
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
 }
 
 export async function cancelTaskWithStateAction(
@@ -419,6 +426,7 @@ export async function cancelTaskWithStateAction(
     revalidatePath(`/tasks/${parsed.data.taskId}`);
     revalidatePath("/tasks");
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
     return { error: null, ok: true };
 }
 
@@ -436,6 +444,7 @@ export async function adminResolveDisputeAction(formData: FormData) {
     revalidatePath(`/tasks/${taskId}`);
     revalidatePath("/admin");
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
 }
 
 export async function adminResolveDisputeWithStateAction(
@@ -480,5 +489,6 @@ export async function adminResolveDisputeWithStateAction(
     revalidatePath(`/tasks/${taskId}`);
     revalidatePath("/admin");
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
     return { error: null, ok: true };
 }

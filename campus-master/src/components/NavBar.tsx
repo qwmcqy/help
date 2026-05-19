@@ -16,18 +16,19 @@ export default function NavBar({
     const isTasks = pathname === "/tasks" || (pathname.startsWith("/tasks/") && !isTasksNew);
     const isNotifications = pathname === "/notifications";
     const isDashboard = pathname === "/dashboard";
+    const isAccount = pathname === "/dashboard/account";
     const isAdminPage = pathname === "/admin";
     const isAuthPage = pathname.startsWith("/auth");
 
     function pillClass(active: boolean) {
         return active
-            ? "rounded-lg bg-teal-700 px-3 py-2 font-semibold text-white shadow-sm"
-            : "rounded-lg px-3 py-2 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950";
+            ? "rounded-lg border border-teal-700 bg-teal-700 px-3 py-2 font-semibold text-white shadow-sm"
+            : "rounded-lg border border-slate-200 bg-white px-3 py-2 font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950";
     }
 
     function ctaClass(active: boolean) {
         return active
-            ? "rounded-lg bg-teal-700 px-3 py-2 font-semibold text-white shadow-sm"
+            ? "rounded-lg border border-teal-700 bg-teal-700 px-3 py-2 font-semibold text-white shadow-sm"
             : "rounded-lg border border-slate-200 bg-white px-3 py-2 font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50";
     }
 
@@ -43,52 +44,63 @@ export default function NavBar({
                     </span>
                     <span>校园“万事达”</span>
                 </Link>
-                <nav className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-1 text-sm lg:mx-0 lg:overflow-visible lg:pb-0">
+                <nav className="-mx-1 flex items-center justify-between gap-3 overflow-x-auto px-1 pb-1 text-sm lg:mx-0 lg:flex-1 lg:overflow-visible lg:pb-0">
                     {isAuthed ? (
                         <>
-                            <Link
-                                href="/tasks"
-                                aria-current={isTasks ? "page" : undefined}
-                                className={pillClass(isTasks)}
-                            >
-                                任务大厅
-                            </Link>
-                            <Link
-                                href="/tasks/new"
-                                aria-current={isTasksNew ? "page" : undefined}
-                                className={ctaClass(isTasksNew)}
-                            >
-                                发布任务
-                            </Link>
-                            <Link
-                                href="/notifications"
-                                aria-current={isNotifications ? "page" : undefined}
-                                className={pillClass(isNotifications)}
-                            >
-                                通知
-                            </Link>
-                            <Link
-                                href="/dashboard"
-                                aria-current={isDashboard ? "page" : undefined}
-                                className={pillClass(isDashboard)}
-                            >
-                                我的看板
-                            </Link>
-                            {isAdmin ? (
+                            <div className="flex shrink-0 items-center gap-1">
                                 <Link
-                                    href="/admin"
-                                    aria-current={isAdminPage ? "page" : undefined}
-                                    className={pillClass(isAdminPage)}
+                                    href="/tasks"
+                                    aria-current={isTasks ? "page" : undefined}
+                                    className={pillClass(isTasks)}
                                 >
-                                    管理员
+                                    任务大厅
                                 </Link>
-                            ) : null}
-                            <Link
-                                href="/auth?mode=logout"
-                                className={pillClass(isAuthPage)}
-                            >
-                                退出
-                            </Link>
+                                <Link
+                                    href="/tasks/new"
+                                    aria-current={isTasksNew ? "page" : undefined}
+                                    className={ctaClass(isTasksNew)}
+                                >
+                                    发布任务
+                                </Link>
+                                <Link
+                                    href="/dashboard"
+                                    aria-current={isDashboard ? "page" : undefined}
+                                    className={pillClass(isDashboard)}
+                                >
+                                    任务看板
+                                </Link>
+                            </div>
+                            <div className="ml-auto flex shrink-0 items-center gap-1">
+                                <Link
+                                    href="/notifications"
+                                    aria-current={isNotifications ? "page" : undefined}
+                                    className={pillClass(isNotifications)}
+                                >
+                                    通知
+                                </Link>
+                                <Link
+                                    href="/dashboard/account"
+                                    aria-current={isAccount ? "page" : undefined}
+                                    className={pillClass(isAccount)}
+                                >
+                                    账号
+                                </Link>
+                                {isAdmin ? (
+                                    <Link
+                                        href="/admin"
+                                        aria-current={isAdminPage ? "page" : undefined}
+                                        className={pillClass(isAdminPage)}
+                                    >
+                                        管理员
+                                    </Link>
+                                ) : null}
+                                <Link
+                                    href="/auth?mode=logout"
+                                    className={pillClass(isAuthPage)}
+                                >
+                                    退出
+                                </Link>
+                            </div>
                         </>
                     ) : (
                         <Link

@@ -393,8 +393,8 @@ export default async function TaskDetailPage({
                         {task.status === "open" && !isRequester && !canAccept ? (
                             <p className="mt-3 text-sm leading-6 text-slate-600">
                                 当前角色不是“接单方”，无法接单。可到{" "}
-                                <Link href="/dashboard" className="soft-link">
-                                    我的看板
+                                <Link href="/dashboard/account" className="soft-link">
+                                    账号与角色
                                 </Link>
                                 {" "}切换角色为“接单方（helper）”。
                             </p>

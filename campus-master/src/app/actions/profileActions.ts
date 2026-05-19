@@ -28,8 +28,9 @@ export async function updateRoleAction(formData: FormData) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
     revalidatePath("/tasks");
-    redirect("/dashboard");
+    redirect("/dashboard/account");
 }
 
 export async function updateRoleWithStateAction(
@@ -60,6 +61,7 @@ export async function updateRoleWithStateAction(
     }
 
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/account");
     revalidatePath("/tasks");
     return { error: null, ok: true };
 }
