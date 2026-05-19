@@ -27,7 +27,7 @@ export default function AuthPage() {
             setError(error.message);
             return;
         }
-        router.push("/");
+        window.location.replace("/");
     }
 
     async function login(e: React.FormEvent) {

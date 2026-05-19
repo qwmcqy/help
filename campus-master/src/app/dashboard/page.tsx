@@ -12,6 +12,12 @@ type TaskListItem = {
     created_at: string;
 };
 
+const roleLabels: Record<string, string> = {
+    requester: "需求方（requester）",
+    helper: "接单方（helper）",
+    admin: "管理员（admin）",
+};
+
 function labelStatus(s: string) {
     switch (s) {
         case "open":
@@ -131,7 +137,9 @@ export default async function DashboardPage() {
                         <div className="flex items-center justify-between gap-3">
                             <span className="text-zinc-600">角色</span>
                             <span className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-700">
-                                {profile?.role ?? "未知"}
+                                {profile?.role
+                                    ? roleLabels[profile.role] ?? profile.role
+                                    : "未知"}
                             </span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
