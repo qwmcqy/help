@@ -99,7 +99,7 @@ export default function TaskChat(props: {
     }
 
     return (
-        <section id="chat" className="mt-6 rounded-md border bg-white p-4">
+        <section id="chat" className="rounded-md border bg-white p-4">
             <div className="text-sm font-medium">私聊（仅任务双方可见）</div>
             <div className="mt-3 rounded-md border bg-zinc-50 p-3">
                 {messages.length ? (

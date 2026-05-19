@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
-import RealtimeNotifications from "@/components/RealtimeNotifications";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const geistSans = Geist({
@@ -32,7 +31,7 @@ export default function RootLayout({
       lang="zh-CN"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-50">
+      <body className="flex min-h-full flex-col bg-gradient-to-b from-zinc-50 via-white to-zinc-100 text-zinc-900">
         <RootShell>{children}</RootShell>
       </body>
     </html>
@@ -58,9 +57,8 @@ async function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavBar isAuthed={Boolean(user)} isAdmin={isAdmin} />
-      {user ? <RealtimeNotifications /> : null}
       <main className="flex-1">{children}</main>
-      <footer className="border-t bg-white">
+      <footer className="border-t border-zinc-200/60 bg-white/70">
         <div className="mx-auto w-full max-w-5xl px-4 py-6 text-xs text-zinc-600">
           Web 开发课程设计：校园“万事达”互助与众包任务平台
         </div>
