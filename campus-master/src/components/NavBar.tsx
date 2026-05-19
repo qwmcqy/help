@@ -21,27 +21,29 @@ export default function NavBar({
 
     function pillClass(active: boolean) {
         return active
-            ? "rounded-full bg-zinc-900 px-3 py-1.5 font-medium text-white shadow-sm"
-            : "rounded-full px-3 py-1.5 font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900";
+            ? "rounded-lg bg-teal-700 px-3 py-2 font-semibold text-white shadow-sm"
+            : "rounded-lg px-3 py-2 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950";
     }
 
     function ctaClass(active: boolean) {
         return active
-            ? "rounded-full bg-zinc-900 px-3 py-1.5 font-medium text-white shadow-sm"
-            : "rounded-full border border-zinc-200/70 bg-white/80 px-3 py-1.5 font-medium text-zinc-900 hover:bg-white";
+            ? "rounded-lg bg-teal-700 px-3 py-2 font-semibold text-white shadow-sm"
+            : "rounded-lg border border-slate-200 bg-white px-3 py-2 font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50";
     }
 
     return (
-        <header className="border-b border-zinc-200/60 bg-white/70 backdrop-blur">
-            <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
+        <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur">
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
                 <Link
                     href="/"
-                    className="inline-flex items-center gap-2 font-semibold tracking-tight text-zinc-900"
+                    className="inline-flex items-center gap-2 text-base font-semibold tracking-normal text-slate-950"
                 >
-                    <span className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-amber-400 via-blue-400 to-emerald-400" />
-                    校园“万事达”
+                    <span className="grid h-8 w-8 place-items-center rounded-lg bg-teal-700 text-sm font-bold text-white shadow-sm">
+                        万
+                    </span>
+                    <span>校园“万事达”</span>
                 </Link>
-                <nav className="flex items-center gap-3 text-sm">
+                <nav className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-1 text-sm lg:mx-0 lg:overflow-visible lg:pb-0">
                     {isAuthed ? (
                         <>
                             <Link

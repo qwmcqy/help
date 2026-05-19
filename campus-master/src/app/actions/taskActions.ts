@@ -19,6 +19,11 @@ export type CreateTaskActionState = {
     >;
 };
 
+export type SimpleActionState = {
+    error: string | null;
+    ok: boolean;
+};
+
 export async function topUpAction(formData: FormData) {
     const parsed = TopUpSchema.safeParse({
         amountCents: formData.get("amountCents"),
@@ -35,6 +40,39 @@ export async function topUpAction(formData: FormData) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard");
+}
+
+export async function topUpWithStateAction(
+    _prevState: SimpleActionState,
+    formData: FormData,
+): Promise<SimpleActionState> {
+    const parsed = TopUpSchema.safeParse({
+        amountCents: formData.get("amountCents"),
+    });
+
+    if (!parsed.success) {
+        return { error: "请输入 1 到 10000000 之间的整数金额（单位：分）。", ok: false };
+    }
+
+    const supabase = await createSupabaseServerClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: "请先登录后再充值。", ok: false };
+    }
+
+    const { error } = await supabase.rpc("top_up", {
+        p_amount_cents: parsed.data.amountCents,
+    });
+
+    if (error) {
+        return { error: error.message, ok: false };
+    }
+
+    revalidatePath("/dashboard");
+    return { error: null, ok: true };
 }
 
 export async function createTaskAction(
@@ -135,6 +173,35 @@ export async function acceptTaskAction(formData: FormData) {
     revalidatePath(`/tasks/${taskId}`);
 }
 
+export async function acceptTaskWithStateAction(
+    _prevState: SimpleActionState,
+    formData: FormData,
+): Promise<SimpleActionState> {
+    const taskId = String(formData.get("taskId") || "");
+    if (!taskId) {
+        return { error: "任务参数无效，请刷新页面后重试。", ok: false };
+    }
+
+    const supabase = await createSupabaseServerClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: "请先登录后再接单。", ok: false };
+    }
+
+    const { error } = await supabase.rpc("accept_task", { p_task_id: taskId });
+    if (error) {
+        return { error: error.message, ok: false };
+    }
+
+    revalidatePath(`/tasks/${taskId}`);
+    revalidatePath("/tasks");
+    revalidatePath("/dashboard");
+    return { error: null, ok: true };
+}
+
 export async function submitEvidenceAction(formData: FormData) {
     const taskId = String(formData.get("taskId") || "");
     const imagePaths = formData
@@ -160,6 +227,48 @@ export async function submitEvidenceAction(formData: FormData) {
     revalidatePath(`/tasks/${taskId}`);
 }
 
+export async function submitEvidenceWithStateAction(
+    _prevState: SimpleActionState,
+    formData: FormData,
+): Promise<SimpleActionState> {
+    const taskId = String(formData.get("taskId") || "");
+    const imagePaths = formData
+        .getAll("imagePath")
+        .map((x) => String(x))
+        .filter(Boolean);
+    const parsed = EvidenceSchema.safeParse({
+        evidenceText: formData.get("evidenceText"),
+        imagePaths,
+    });
+
+    if (!taskId || !parsed.success) {
+        return { error: "请填写至少 2 个字的凭证说明。", ok: false };
+    }
+
+    const supabase = await createSupabaseServerClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: "请先登录后再提交凭证。", ok: false };
+    }
+
+    const { error } = await supabase.rpc("submit_evidence", {
+        p_task_id: taskId,
+        p_evidence_text: parsed.data.evidenceText,
+        p_evidence_image_paths: parsed.data.imagePaths ?? [],
+    });
+
+    if (error) {
+        return { error: error.message, ok: false };
+    }
+
+    revalidatePath(`/tasks/${taskId}`);
+    revalidatePath("/dashboard");
+    return { error: null, ok: true };
+}
+
 export async function confirmCompletionAction(formData: FormData) {
     const taskId = String(formData.get("taskId") || "");
     const supabase = await createSupabaseServerClient();
@@ -170,6 +279,37 @@ export async function confirmCompletionAction(formData: FormData) {
 
     revalidatePath(`/tasks/${taskId}`);
     revalidatePath("/dashboard");
+}
+
+export async function confirmCompletionWithStateAction(
+    _prevState: SimpleActionState,
+    formData: FormData,
+): Promise<SimpleActionState> {
+    const taskId = String(formData.get("taskId") || "");
+    if (!taskId) {
+        return { error: "任务参数无效，请刷新页面后重试。", ok: false };
+    }
+
+    const supabase = await createSupabaseServerClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: "请先登录后再确认完成。", ok: false };
+    }
+
+    const { error } = await supabase.rpc("confirm_completion", {
+        p_task_id: taskId,
+    });
+
+    if (error) {
+        return { error: error.message, ok: false };
+    }
+
+    revalidatePath(`/tasks/${taskId}`);
+    revalidatePath("/dashboard");
+    return { error: null, ok: true };
 }
 
 export async function openDisputeAction(formData: FormData) {
@@ -188,6 +328,40 @@ export async function openDisputeAction(formData: FormData) {
 
     revalidatePath(`/tasks/${taskId}`);
     revalidatePath("/admin");
+}
+
+export async function openDisputeWithStateAction(
+    _prevState: SimpleActionState,
+    formData: FormData,
+): Promise<SimpleActionState> {
+    const taskId = String(formData.get("taskId") || "");
+    const parsed = DisputeSchema.safeParse({ reason: formData.get("reason") });
+
+    if (!taskId || !parsed.success) {
+        return { error: "请填写至少 2 个字的争议原因。", ok: false };
+    }
+
+    const supabase = await createSupabaseServerClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: "请先登录后再发起争议。", ok: false };
+    }
+
+    const { error } = await supabase.rpc("open_dispute", {
+        p_task_id: taskId,
+        p_reason: parsed.data.reason,
+    });
+
+    if (error) {
+        return { error: error.message, ok: false };
+    }
+
+    revalidatePath(`/tasks/${taskId}`);
+    revalidatePath("/admin");
+    return { error: null, ok: true };
 }
 
 export async function cancelTaskAction(formData: FormData) {
@@ -211,6 +385,43 @@ export async function cancelTaskAction(formData: FormData) {
     revalidatePath("/dashboard");
 }
 
+export async function cancelTaskWithStateAction(
+    _prevState: SimpleActionState,
+    formData: FormData,
+): Promise<SimpleActionState> {
+    const parsed = CancelTaskSchema.safeParse({
+        taskId: formData.get("taskId"),
+        reason: formData.get("reason"),
+    });
+
+    if (!parsed.success) {
+        return { error: "取消参数无效，请刷新页面后重试。", ok: false };
+    }
+
+    const supabase = await createSupabaseServerClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: "请先登录后再取消任务。", ok: false };
+    }
+
+    const { error } = await supabase.rpc("cancel_task", {
+        p_task_id: parsed.data.taskId,
+        p_reason: parsed.data.reason ?? "",
+    });
+
+    if (error) {
+        return { error: error.message, ok: false };
+    }
+
+    revalidatePath(`/tasks/${parsed.data.taskId}`);
+    revalidatePath("/tasks");
+    revalidatePath("/dashboard");
+    return { error: null, ok: true };
+}
+
 export async function adminResolveDisputeAction(formData: FormData) {
     const taskId = String(formData.get("taskId") || "");
     const resolution = String(formData.get("resolution") || "");
@@ -225,4 +436,49 @@ export async function adminResolveDisputeAction(formData: FormData) {
     revalidatePath(`/tasks/${taskId}`);
     revalidatePath("/admin");
     revalidatePath("/dashboard");
+}
+
+export async function adminResolveDisputeWithStateAction(
+    _prevState: SimpleActionState,
+    formData: FormData,
+): Promise<SimpleActionState> {
+    const taskId = String(formData.get("taskId") || "");
+    const resolution = String(formData.get("resolution") || "");
+
+    if (!taskId || !["complete", "refund"].includes(resolution)) {
+        return { error: "裁决参数无效，请刷新页面后重试。", ok: false };
+    }
+
+    const supabase = await createSupabaseServerClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: "请先登录后再处理争议。", ok: false };
+    }
+
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+    if (profile?.role !== "admin") {
+        return { error: "当前账号没有管理员权限。", ok: false };
+    }
+
+    const { error } = await supabase.rpc("resolve_dispute", {
+        p_task_id: taskId,
+        p_resolution: resolution,
+    });
+
+    if (error) {
+        return { error: error.message, ok: false };
+    }
+
+    revalidatePath(`/tasks/${taskId}`);
+    revalidatePath("/admin");
+    revalidatePath("/dashboard");
+    return { error: null, ok: true };
 }

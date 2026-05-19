@@ -31,7 +31,7 @@ export default function RootLayout({
       lang="zh-CN"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-gradient-to-b from-zinc-50 via-white to-zinc-100 text-zinc-900">
+      <body className="flex min-h-full flex-col">
         <RootShell>{children}</RootShell>
       </body>
     </html>
@@ -58,8 +58,8 @@ async function RootShell({ children }: { children: React.ReactNode }) {
     <>
       <NavBar isAuthed={Boolean(user)} isAdmin={isAdmin} />
       <main className="flex-1">{children}</main>
-      <footer className="border-t border-zinc-200/60 bg-white/70">
-        <div className="mx-auto w-full max-w-5xl px-4 py-6 text-xs text-zinc-600">
+      <footer className="border-t border-slate-200/80 bg-white/75">
+        <div className="mx-auto w-full max-w-6xl px-4 py-5 text-xs text-slate-500 sm:px-6 lg:px-8">
           Web 开发课程设计：校园“万事达”互助与众包任务平台
         </div>
       </footer>

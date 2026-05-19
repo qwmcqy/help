@@ -76,27 +76,27 @@ export default function RealtimeNotifications() {
     if (items.length === 0) return null;
 
     return (
-        <section className="mx-auto w-full max-w-5xl px-4 py-3">
-            <div className="rounded-md border bg-white p-3">
-                <div className="text-sm font-medium">最新通知</div>
-                <ul className="mt-2 space-y-1 text-sm text-zinc-700">
+        <section className="mx-auto w-full max-w-6xl px-4 py-3 sm:px-6 lg:px-8">
+            <div className="section-card p-3">
+                <div className="text-sm font-semibold text-slate-900">最新通知</div>
+                <ul className="mt-2 space-y-2 text-sm text-slate-700">
                     {items.map((n) => (
-                        <li key={n.id} className="truncate">
+                        <li key={n.id} className="break-words leading-6">
                             {n.reference_id ? (
                                 <Link
                                     href={`/tasks/${n.reference_id}${n.type === "message" ? "#chat" : ""}`}
-                                    className="hover:underline"
+                                    className="underline-offset-4 hover:underline"
                                 >
                                     <span className="font-medium">{n.title}</span>
                                     {n.body ? (
-                                        <span className="text-zinc-600">：{n.body}</span>
+                                        <span className="text-slate-600">：{n.body}</span>
                                     ) : null}
                                 </Link>
                             ) : (
                                 <>
                                     <span className="font-medium">{n.title}</span>
                                     {n.body ? (
-                                        <span className="text-zinc-600">：{n.body}</span>
+                                        <span className="text-slate-600">：{n.body}</span>
                                     ) : null}
                                 </>
                             )}

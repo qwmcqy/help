@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type TaskListItem = {
@@ -32,37 +33,37 @@ function labelStatus(s: string) {
 function statusBadgeClass(status: string) {
     switch (status) {
         case "open":
-            return "border-amber-200 bg-amber-50 text-amber-900";
+            return "border-amber-200 bg-amber-50 text-amber-800";
         case "in_progress":
-            return "border-blue-200 bg-blue-50 text-blue-900";
+            return "border-sky-200 bg-sky-50 text-sky-800";
         case "awaiting_acceptance":
-            return "border-violet-200 bg-violet-50 text-violet-900";
+            return "border-indigo-200 bg-indigo-50 text-indigo-800";
         case "completed":
-            return "border-emerald-200 bg-emerald-50 text-emerald-900";
+            return "border-teal-200 bg-teal-50 text-teal-800";
         case "canceled":
-            return "border-zinc-200 bg-zinc-50 text-zinc-600";
+            return "border-slate-200 bg-slate-50 text-slate-600";
         case "disputed":
-            return "border-rose-200 bg-rose-50 text-rose-900";
+            return "border-rose-200 bg-rose-50 text-rose-800";
         default:
-            return "border-zinc-200 bg-white text-zinc-700";
+            return "border-slate-200 bg-white text-slate-700";
     }
 }
 
 function statusAccentClass(status: string) {
     switch (status) {
         case "open":
-            return "bg-gradient-to-b from-amber-400 to-amber-600";
+            return "bg-amber-300";
         case "in_progress":
-            return "bg-gradient-to-b from-blue-400 to-blue-600";
+            return "bg-sky-300";
         case "awaiting_acceptance":
-            return "bg-gradient-to-b from-violet-400 to-violet-600";
+            return "bg-indigo-300";
         case "completed":
-            return "bg-gradient-to-b from-emerald-400 to-emerald-600";
+            return "bg-teal-300";
         case "disputed":
-            return "bg-gradient-to-b from-rose-400 to-rose-600";
+            return "bg-rose-300";
         case "canceled":
         default:
-            return "bg-gradient-to-b from-zinc-300 to-zinc-500";
+            return "bg-slate-300";
     }
 }
 
@@ -76,6 +77,17 @@ export default async function TasksPage({
     const category = sp.category || "";
 
     const supabase = await createSupabaseServerClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        const nextParams = new URLSearchParams();
+        if (status) nextParams.set("status", status);
+        if (category) nextParams.set("category", category);
+        const next = nextParams.size ? `/tasks?${nextParams.toString()}` : "/tasks";
+        redirect(`/auth?next=${encodeURIComponent(next)}`);
+    }
 
     let q = supabase
         .from("tasks")
@@ -90,34 +102,33 @@ export default async function TasksPage({
     const tasks = (data ?? []) as TaskListItem[];
 
     return (
-        <div className="mx-auto w-full max-w-5xl px-4 py-10">
-            <div className="overflow-hidden rounded-2xl bg-white/70 shadow-sm ring-1 ring-zinc-200/60">
-                <div className="h-1.5 w-full bg-gradient-to-r from-amber-400 via-blue-400 to-emerald-400" />
-                <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="app-shell">
+            <section className="page-card p-5 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold tracking-tight">任务大厅</h1>
-                        <p className="mt-1 text-sm text-zinc-600">
+                        <div className="eyebrow">Task market</div>
+                        <h1 className="page-title mt-2">任务大厅</h1>
+                        <p className="page-subtitle">
                             全站任务池（最多展示 50 条）
                         </p>
                     </div>
                     <Link
                         href="/tasks/new"
-                        className="inline-flex items-center justify-center rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm"
+                        className="btn-primary"
                     >
                         发布任务
                     </Link>
                 </div>
-            </div>
+            </section>
 
-            <div className="mt-6 overflow-hidden rounded-2xl bg-white/70 shadow-sm ring-1 ring-zinc-200/60">
-                <div className="h-1.5 w-full bg-gradient-to-r from-violet-400 via-fuchsia-400 to-amber-400" />
-                <form className="grid gap-3 p-4 sm:grid-cols-3 sm:items-end">
-                    <label className="block text-sm">
-                        <div className="text-zinc-700">状态</div>
+            <section className="section-card mt-5 p-4">
+                <form className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                    <label className="field-label">
+                        状态
                         <select
                             name="status"
                             defaultValue={status}
-                            className="mt-1 w-full rounded-lg border border-zinc-200/70 bg-white/80 px-3 py-2 text-sm"
+                            className="field-control"
                         >
                             <option value="">全部</option>
                             <option value="open">待接单</option>
@@ -128,20 +139,20 @@ export default async function TasksPage({
                             <option value="disputed">争议中</option>
                         </select>
                     </label>
-                    <label className="block text-sm">
-                        <div className="text-zinc-700">分类</div>
+                    <label className="field-label">
+                        分类
                         <input
                             name="category"
                             defaultValue={category}
                             placeholder="如：快递/代买/搬运"
-                            className="mt-1 w-full rounded-lg border border-zinc-200/70 bg-white/80 px-3 py-2 text-sm"
+                            className="field-control"
                         />
                     </label>
-                    <button className="inline-flex items-center justify-center rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm">
+                    <button className="btn-primary">
                         筛选
                     </button>
                 </form>
-            </div>
+            </section>
 
             {error ? (
                 <p className="mt-6 text-sm text-red-600">{error.message}</p>
@@ -151,7 +162,7 @@ export default async function TasksPage({
                 {tasks.map((t) => (
                     <li
                         key={t.id}
-                        className="relative overflow-hidden rounded-2xl bg-white/70 p-4 pl-5 shadow-sm ring-1 ring-zinc-200/60"
+                        className="list-row pl-5"
                     >
                         <div
                             className={`absolute inset-y-0 left-0 w-1.5 ${statusAccentClass(
@@ -162,7 +173,7 @@ export default async function TasksPage({
                             <div className="min-w-0">
                                 <Link
                                     href={`/tasks/${t.id}`}
-                                    className="block truncate text-base font-semibold text-zinc-900"
+                                    className="block truncate text-base font-semibold text-slate-950"
                                 >
                                     {t.title}
                                 </Link>
@@ -176,7 +187,7 @@ export default async function TasksPage({
                                         {labelStatus(t.status)}
                                     </span>
                                     {t.category ? (
-                                        <span className="inline-flex items-center rounded-full border border-zinc-200/70 bg-white/80 px-2.5 py-1 text-xs text-zinc-700">
+                                        <span className="status-pill border-slate-200 bg-slate-50 text-slate-600">
                                             {t.category}
                                         </span>
                                     ) : null}
@@ -184,12 +195,12 @@ export default async function TasksPage({
                             </div>
 
                             <div className="shrink-0 text-right">
-                                <div className="text-lg font-semibold text-zinc-900">
+                                <div className="text-lg font-semibold text-slate-950">
                                     ￥{(t.reward_cents / 100).toFixed(2)}
                                 </div>
                                 <Link
                                     href={`/tasks/${t.id}`}
-                                    className="mt-2 inline-flex items-center justify-center rounded-full border border-zinc-200/70 bg-white/80 px-3 py-1.5 text-sm font-medium"
+                                    className="btn-secondary mt-2 px-3 py-1.5"
                                 >
                                     详情
                                 </Link>
@@ -198,6 +209,25 @@ export default async function TasksPage({
                     </li>
                 ))}
             </ul>
+
+            {!error && tasks.length === 0 ? (
+                <div className="section-card mt-6 p-6 text-center">
+                    <div className="text-base font-semibold text-slate-950">
+                        没有找到符合条件的任务
+                    </div>
+                    <p className="mt-2 text-sm text-slate-500">
+                        可以调整筛选条件，或者发布一个新的任务。
+                    </p>
+                    <div className="mt-4 flex justify-center gap-3">
+                        <Link href="/tasks" className="btn-secondary">
+                            清空筛选
+                        </Link>
+                        <Link href="/tasks/new" className="btn-primary">
+                            发布任务
+                        </Link>
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type MessageRow = {
@@ -23,6 +23,11 @@ export default function TaskChat(props: {
     const [text, setText] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [sending, setSending] = useState(false);
+    const bottomRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        bottomRef.current?.scrollIntoView({ block: "end" });
+    }, [messages.length]);
 
     useEffect(() => {
         const channel = supabase
@@ -99,9 +104,9 @@ export default function TaskChat(props: {
     }
 
     return (
-        <section id="chat" className="rounded-md border bg-white p-4">
-            <div className="text-sm font-medium">私聊（仅任务双方可见）</div>
-            <div className="mt-3 rounded-md border bg-zinc-50 p-3">
+        <section id="chat" className="section-card p-4">
+            <div className="text-sm font-semibold text-slate-900">私聊（仅任务双方可见）</div>
+            <div className="mt-3 max-h-96 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3">
                 {messages.length ? (
                     <ul className="space-y-2 text-sm">
                         {messages.map((m) => {
@@ -113,15 +118,15 @@ export default function TaskChat(props: {
                                 >
                                     <div
                                         className={
-                                            "inline-block max-w-[85%] whitespace-pre-wrap rounded-md border px-3 py-2 " +
+                                            "inline-block max-w-[85%] whitespace-pre-wrap break-words rounded-md border px-3 py-2 " +
                                             (mine
-                                                ? "bg-white"
-                                                : "bg-white")
+                                                ? "border-teal-100 bg-teal-50 text-slate-900"
+                                                : "border-slate-200 bg-white text-slate-700")
                                         }
                                     >
                                         {m.body}
                                     </div>
-                                    <div className="mt-1 text-xs text-zinc-500">
+                                    <div className="mt-1 text-xs text-slate-500">
                                         {new Date(m.created_at).toLocaleString()}
                                     </div>
                                 </li>
@@ -129,28 +134,29 @@ export default function TaskChat(props: {
                         })}
                     </ul>
                 ) : (
-                    <div className="text-sm text-zinc-600">暂无消息</div>
+                    <div className="text-sm text-slate-500">暂无消息</div>
                 )}
+                <div ref={bottomRef} />
             </div>
 
             <form onSubmit={onSend} className="mt-3 flex gap-2">
                 <input
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    className="w-full rounded-md border px-3 py-2 text-sm"
-                    placeholder="输入消息..."
+                    className="field-control mt-0"
+                    placeholder="输入消息…"
                     maxLength={2000}
                 />
                 <button
                     disabled={sending}
-                    className="shrink-0 rounded-md bg-black px-4 py-2 text-sm text-white disabled:opacity-60"
+                    className="btn-primary shrink-0"
                 >
-                    {sending ? "发送中" : "发送"}
+                    {sending ? "发送中…" : "发送"}
                 </button>
             </form>
 
             {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
-            <p className="mt-2 text-xs text-zinc-600">
+            <p className="mt-2 text-xs text-slate-500">
                 提示：发送后对方会收到实时通知（顶部“最新通知”）。
             </p>
         </section>

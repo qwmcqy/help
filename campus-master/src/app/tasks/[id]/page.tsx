@@ -1,19 +1,15 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
-    acceptTaskAction,
-    cancelTaskAction,
-    confirmCompletionAction,
-    openDisputeAction,
-    submitEvidenceAction,
-} from "@/app/actions/taskActions";
-import { submitReviewAction } from "@/app/actions/reviewActions";
-import EvidenceUploader from "@/components/EvidenceUploader";
+    AcceptTaskForm,
+    CancelTaskForm,
+    ConfirmCompletionForm,
+    OpenDisputeForm,
+    ReviewForm,
+    SubmitEvidenceForm,
+} from "./TaskActionForms";
 import TaskChat from "@/components/TaskChat";
-
-type ProfileRole = {
-    role: string;
-};
 
 type MessageRow = {
     id: string;
@@ -52,55 +48,55 @@ function labelStatus(s: string) {
 function statusBadgeClass(status: string) {
     switch (status) {
         case "open":
-            return "border-amber-200 bg-amber-50 text-amber-900";
+            return "border-amber-200 bg-amber-50 text-amber-800";
         case "in_progress":
-            return "border-blue-200 bg-blue-50 text-blue-900";
+            return "border-sky-200 bg-sky-50 text-sky-800";
         case "awaiting_acceptance":
-            return "border-violet-200 bg-violet-50 text-violet-900";
+            return "border-indigo-200 bg-indigo-50 text-indigo-800";
         case "completed":
-            return "border-emerald-200 bg-emerald-50 text-emerald-900";
+            return "border-teal-200 bg-teal-50 text-teal-800";
         case "canceled":
-            return "border-zinc-200 bg-zinc-50 text-zinc-600";
+            return "border-slate-200 bg-slate-50 text-slate-600";
         case "disputed":
-            return "border-rose-200 bg-rose-50 text-rose-900";
+            return "border-rose-200 bg-rose-50 text-rose-800";
         default:
-            return "border-zinc-200 bg-white text-zinc-700";
+            return "border-slate-200 bg-white text-slate-700";
     }
 }
 
 function riskBadgeClass(risk: string) {
     switch (risk) {
         case "high":
-            return "border-red-200 bg-red-50 text-red-800";
+            return "border-rose-200 bg-rose-50 text-rose-800";
         case "medium":
-            return "border-amber-200 bg-amber-50 text-amber-900";
+            return "border-amber-200 bg-amber-50 text-amber-800";
         case "low":
-            return "border-emerald-200 bg-emerald-50 text-emerald-900";
+            return "border-teal-200 bg-teal-50 text-teal-800";
         case "error":
-            return "border-rose-200 bg-rose-50 text-rose-900";
+            return "border-rose-200 bg-rose-50 text-rose-800";
         case "skipped":
-            return "border-zinc-200 bg-white text-zinc-700";
+            return "border-slate-200 bg-white text-slate-700";
         case "pending":
         default:
-            return "border-zinc-200 bg-white text-zinc-700";
+            return "border-slate-200 bg-white text-slate-700";
     }
 }
 
 function statusAccentClass(status: string) {
     switch (status) {
         case "open":
-            return "bg-gradient-to-b from-amber-400 to-amber-600";
+            return "bg-amber-300";
         case "in_progress":
-            return "bg-gradient-to-b from-blue-400 to-blue-600";
+            return "bg-sky-300";
         case "awaiting_acceptance":
-            return "bg-gradient-to-b from-violet-400 to-violet-600";
+            return "bg-indigo-300";
         case "completed":
-            return "bg-gradient-to-b from-emerald-400 to-emerald-600";
+            return "bg-teal-300";
         case "disputed":
-            return "bg-gradient-to-b from-rose-400 to-rose-600";
+            return "bg-rose-300";
         case "canceled":
         default:
-            return "bg-gradient-to-b from-zinc-300 to-zinc-500";
+            return "bg-slate-300";
     }
 }
 
@@ -116,13 +112,15 @@ export default async function TaskDetailPage({
         data: { user },
     } = await supabase.auth.getUser();
 
-    const { data: myProfile } = user
-        ? await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .maybeSingle()
-        : { data: null as ProfileRole | null };
+    if (!user) {
+        redirect(`/auth?next=/tasks/${id}`);
+    }
+
+    const { data: myProfile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
 
     const { data: task, error } = await supabase
         .from("tasks")
@@ -140,9 +138,9 @@ export default async function TaskDetailPage({
 
     if (error) {
         return (
-            <div className="mx-auto w-full max-w-3xl px-4 py-8">
+            <div className="app-shell max-w-3xl">
                 <p className="text-sm text-red-600">{error.message}</p>
-                <Link href="/tasks" className="mt-4 inline-block underline">
+                <Link href="/tasks" className="soft-link mt-4 inline-block">
                     返回任务大厅
                 </Link>
             </div>
@@ -151,22 +149,22 @@ export default async function TaskDetailPage({
 
     if (!task) {
         return (
-            <div className="mx-auto w-full max-w-3xl px-4 py-8">
+            <div className="app-shell max-w-3xl">
                 <p className="text-sm">任务不存在</p>
-                <Link href="/tasks" className="mt-4 inline-block underline">
+                <Link href="/tasks" className="soft-link mt-4 inline-block">
                     返回任务大厅
                 </Link>
             </div>
         );
     }
 
-    const isRequester = user?.id === task.requester_id;
-    const isHelper = user?.id === task.helper_id;
+    const isRequester = user.id === task.requester_id;
+    const isHelper = user.id === task.helper_id;
+    const isParticipant = isRequester || isHelper;
 
     const myRole = (myProfile?.role as string | undefined) ?? null;
     const canAccept =
         task.status === "open" &&
-        Boolean(user) &&
         !isRequester &&
         (myRole === "helper" || myRole === "admin");
 
@@ -228,7 +226,7 @@ export default async function TaskDetailPage({
     const reviewRows = (reviews ?? []) as ReviewRow[];
 
     const hasReviewed = Boolean(
-        user?.id && reviewRows.some((r) => r.reviewer_id === user.id),
+        reviewRows.some((r) => r.reviewer_id === user.id),
     );
 
     const myRevieweeId = isRequester
@@ -238,9 +236,8 @@ export default async function TaskDetailPage({
             : null;
 
     return (
-        <div className="mx-auto w-full max-w-5xl px-4 py-10">
-            <div className="relative overflow-hidden rounded-2xl bg-white/70 shadow-sm ring-1 ring-zinc-200/60">
-                <div className="h-1.5 w-full bg-gradient-to-r from-amber-400 via-blue-400 to-emerald-400" />
+        <div className="app-shell">
+            <section className="page-card relative overflow-hidden">
                 <div
                     className={`absolute inset-y-0 left-0 w-1.5 ${statusAccentClass(
                         task.status,
@@ -248,10 +245,10 @@ export default async function TaskDetailPage({
                 />
                 <div className="flex flex-col gap-4 p-5 pl-6 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                        <Link href="/tasks" className="text-sm text-zinc-600 underline">
+                        <Link href="/tasks" className="soft-link text-sm">
                             返回任务大厅
                         </Link>
-                        <h1 className="mt-2 truncate text-2xl font-semibold tracking-tight">
+                        <h1 className="mt-2 break-words text-2xl font-semibold tracking-normal text-slate-950">
                             {task.title}
                         </h1>
                         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -263,7 +260,7 @@ export default async function TaskDetailPage({
                                 {labelStatus(task.status)}
                             </span>
                             {task.category ? (
-                                <span className="inline-flex items-center rounded-full border border-zinc-200/70 bg-white/80 px-2.5 py-1 text-xs text-zinc-700">
+                                <span className="status-pill border-slate-200 bg-slate-50 text-slate-600">
                                     {task.category}
                                 </span>
                             ) : null}
@@ -271,27 +268,27 @@ export default async function TaskDetailPage({
                     </div>
 
                     <div className="shrink-0 text-right">
-                        <div className="text-2xl font-semibold tracking-tight text-zinc-900">
+                        <div className="text-2xl font-semibold tracking-normal text-slate-950">
                             ￥{(task.reward_cents / 100).toFixed(2)}
                         </div>
-                        <div className="mt-1 text-xs text-zinc-600">报酬（已托管）</div>
+                        <div className="mt-1 text-xs text-slate-500">报酬（已托管）</div>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-3">
                 <div className="space-y-4 lg:col-span-2">
-                    <section className="rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-zinc-200/60">
-                        <div className="text-sm font-medium">任务描述</div>
-                        <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">
+                    <section className="section-card p-4">
+                        <div className="text-sm font-semibold text-slate-900">任务描述</div>
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">
                             {task.description}
                         </p>
                     </section>
 
                     {aiAudit ? (
-                        <section className="rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-zinc-200/60">
+                        <section className="section-card p-4">
                             <div className="flex items-center justify-between gap-3">
-                                <div className="text-sm font-medium">AI 审核（辅助）</div>
+                                <div className="text-sm font-semibold text-slate-900">AI 审核（辅助）</div>
                                 <span
                                     className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs ${riskBadgeClass(
                                         String(aiAudit.risk_level),
@@ -300,7 +297,7 @@ export default async function TaskDetailPage({
                                     {String(aiAudit.risk_level)}
                                 </span>
                             </div>
-                            <div className="mt-2 text-sm text-zinc-700">
+                            <div className="mt-2 text-sm leading-6 text-slate-600">
                                 <div className="whitespace-pre-wrap">
                                     {aiAudit.reason ?? "（无说明）"}
                                 </div>
@@ -309,17 +306,17 @@ export default async function TaskDetailPage({
                     ) : null}
 
                     {task.evidence_text ? (
-                        <section className="rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-zinc-200/60">
-                            <div className="text-sm font-medium">完成凭证</div>
-                            <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">
+                        <section className="section-card p-4">
+                            <div className="text-sm font-semibold text-slate-900">完成凭证</div>
+                            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">
                                 {task.evidence_text}
                             </p>
                         </section>
                     ) : null}
 
                     {signedEvidenceUrls.filter(Boolean).length ? (
-                        <section className="rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-zinc-200/60">
-                            <div className="text-sm font-medium">凭证图片</div>
+                        <section className="section-card p-4">
+                            <div className="text-sm font-semibold text-slate-900">凭证图片</div>
                             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
                                 {signedEvidenceUrls.map((url, idx) =>
                                     url ? (
@@ -334,19 +331,19 @@ export default async function TaskDetailPage({
                                             <img
                                                 src={url}
                                                 alt={`evidence-${idx + 1}`}
-                                                className="h-32 w-full rounded-xl border border-zinc-200/70 object-cover"
+                                                className="h-32 w-full rounded-lg border border-slate-200 object-cover"
                                             />
                                         </a>
                                     ) : null,
                                 )}
                             </div>
-                            <p className="mt-2 text-xs text-zinc-600">
+                            <p className="mt-2 text-xs text-slate-500">
                                 图片为签名链接（有效期约 1 小时）。
                             </p>
                         </section>
                     ) : null}
 
-                    {canChat && conversationId && user ? (
+                    {canChat && conversationId ? (
                         <TaskChat
                             taskId={task.id}
                             conversationId={conversationId}
@@ -355,56 +352,25 @@ export default async function TaskDetailPage({
                         />
                     ) : null}
 
-                    {task.status === "completed" && user && (isRequester || isHelper) ? (
-                        <section className="rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-zinc-200/60">
-                            <div className="text-sm font-medium">评价与信用</div>
-                            <p className="mt-2 text-sm text-zinc-700">
+                    {task.status === "completed" && (isRequester || isHelper) ? (
+                        <section className="section-card p-4">
+                            <div className="text-sm font-semibold text-slate-900">评价与信用</div>
+                            <p className="mt-2 text-sm leading-6 text-slate-600">
                                 任务完成后，双方可进行一次互评；信用分会依据评分动态调整。
                             </p>
 
                             {!hasReviewed && myRevieweeId ? (
-                                <form action={submitReviewAction} className="mt-4 space-y-2">
-                                    <input type="hidden" name="taskId" value={task.id} />
-                                    <input type="hidden" name="revieweeId" value={myRevieweeId} />
-
-                                    <label className="block text-sm">
-                                        <div>星级</div>
-                                        <select
-                                            name="stars"
-                                            defaultValue={5}
-                                            className="mt-1 w-full rounded-lg border border-zinc-200/70 bg-white/80 px-3 py-2 text-sm"
-                                        >
-                                            <option value={5}>5 - 非常满意</option>
-                                            <option value={4}>4 - 满意</option>
-                                            <option value={3}>3 - 一般</option>
-                                            <option value={2}>2 - 不满意</option>
-                                            <option value={1}>1 - 很差</option>
-                                        </select>
-                                    </label>
-
-                                    <label className="block text-sm">
-                                        <div>评语（可选）</div>
-                                        <input
-                                            name="comment"
-                                            className="mt-1 w-full rounded-lg border border-zinc-200/70 bg-white/80 px-3 py-2 text-sm"
-                                            placeholder="简要描述体验"
-                                        />
-                                    </label>
-
-                                    <button className="inline-flex items-center justify-center rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm">
-                                        提交评价
-                                    </button>
-                                </form>
+                                <ReviewForm taskId={task.id} revieweeId={myRevieweeId} />
                             ) : (
-                                <p className="mt-4 text-sm text-zinc-700">你已提交评价。</p>
+                                <p className="mt-4 text-sm text-slate-600">你已提交评价。</p>
                             )}
 
                             {reviewRows.length ? (
                                 <div className="mt-6">
-                                    <div className="text-sm font-medium">已提交的评价</div>
-                                    <ul className="mt-2 space-y-2 text-sm text-zinc-700">
+                                    <div className="text-sm font-semibold text-slate-900">已提交的评价</div>
+                                    <ul className="mt-2 space-y-2 text-sm text-slate-600">
                                         {reviewRows.map((r, idx) => (
-                                            <li key={idx} className="rounded-xl bg-white/80 p-3 ring-1 ring-zinc-200/60">
+                                            <li key={idx} className="rounded-lg bg-slate-50 p-3">
                                                 <div>星级：{r.stars}</div>
                                                 {r.comment ? <div>评语：{r.comment}</div> : null}
                                             </li>
@@ -417,23 +383,17 @@ export default async function TaskDetailPage({
                 </div>
 
                 <aside className="lg:col-span-1">
-                    <section className="overflow-hidden rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-zinc-200/60">
-                        <div className="-mx-4 -mt-4 mb-3 h-1.5 bg-gradient-to-r from-blue-400 via-violet-400 to-rose-400" />
-                        <div className="text-sm font-medium">可执行操作</div>
+                    <section className="section-card p-4">
+                        <div className="text-sm font-semibold text-slate-900">可执行操作</div>
 
                         {canAccept ? (
-                            <form action={acceptTaskAction} className="mt-3">
-                                <input type="hidden" name="taskId" value={task.id} />
-                                <button className="w-full rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm">
-                                    接单（进入进行中）
-                                </button>
-                            </form>
+                            <AcceptTaskForm taskId={task.id} />
                         ) : null}
 
-                        {task.status === "open" && user && !isRequester && !canAccept ? (
-                            <p className="mt-3 text-sm text-zinc-600">
+                        {task.status === "open" && !isRequester && !canAccept ? (
+                            <p className="mt-3 text-sm leading-6 text-slate-600">
                                 当前角色不是“接单方”，无法接单。可到{" "}
-                                <Link href="/dashboard" className="underline">
+                                <Link href="/dashboard" className="soft-link">
                                     我的看板
                                 </Link>
                                 {" "}切换角色为“接单方（helper）”。
@@ -441,80 +401,22 @@ export default async function TaskDetailPage({
                         ) : null}
 
                         {task.status === "in_progress" && isHelper ? (
-                            <form action={submitEvidenceAction} className="mt-4 space-y-2">
-                                <input type="hidden" name="taskId" value={task.id} />
-                                <label className="block text-sm">
-                                    <div>凭证说明</div>
-                                    <textarea
-                                        name="evidenceText"
-                                        required
-                                        rows={4}
-                                        className="mt-1 w-full rounded-lg border border-zinc-200/70 bg-white/80 px-3 py-2 text-sm"
-                                        placeholder="例如：已代领并送达宿舍楼下"
-                                    />
-                                </label>
-
-                                <div className="rounded-xl border border-zinc-200/70 bg-zinc-50/70 p-3">
-                                    <div className="text-sm font-medium">上传图片（可选）</div>
-                                    <div className="mt-2">
-                                        <EvidenceUploader taskId={task.id} />
-                                    </div>
-                                </div>
-
-                                <button className="w-full rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm">
-                                    提交凭证（进入待验收）
-                                </button>
-                            </form>
+                            <SubmitEvidenceForm taskId={task.id} />
                         ) : null}
 
                         {task.status === "awaiting_acceptance" && isRequester ? (
-                            <form action={confirmCompletionAction} className="mt-4">
-                                <input type="hidden" name="taskId" value={task.id} />
-                                <button className="w-full rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm">
-                                    确认完成并支付
-                                </button>
-                            </form>
+                            <ConfirmCompletionForm taskId={task.id} />
                         ) : null}
 
-                        {task.status !== "completed" && task.status !== "canceled" ? (
-                            <form action={openDisputeAction} className="mt-4 space-y-2">
-                                <input type="hidden" name="taskId" value={task.id} />
-                                <label className="block text-sm">
-                                    <div>发起争议</div>
-                                    <input
-                                        name="reason"
-                                        required
-                                        className="mt-1 w-full rounded-lg border border-zinc-200/70 bg-white/80 px-3 py-2 text-sm"
-                                        placeholder="简述争议原因"
-                                    />
-                                </label>
-                                <button className="w-full rounded-full border border-zinc-200/70 bg-white/80 px-4 py-2 text-sm font-medium">
-                                    进入争议中
-                                </button>
-                            </form>
+                        {task.status !== "completed" && task.status !== "canceled" && isParticipant ? (
+                            <OpenDisputeForm taskId={task.id} />
                         ) : null}
 
-                        {task.status !== "completed" && task.status !== "canceled" && user && (isRequester || isHelper) ? (
-                            <form action={cancelTaskAction} className="mt-4 space-y-2">
-                                <input type="hidden" name="taskId" value={task.id} />
-                                <label className="block text-sm">
-                                    <div>取消任务</div>
-                                    <input
-                                        name="reason"
-                                        className="mt-1 w-full rounded-lg border border-zinc-200/70 bg-white/80 px-3 py-2 text-sm"
-                                        placeholder="可选：填写取消原因"
-                                    />
-                                </label>
-                                <button className="w-full rounded-full border border-zinc-200/70 bg-white/80 px-4 py-2 text-sm font-medium">
-                                    取消任务
-                                </button>
-                                <p className="text-xs text-zinc-600">
-                                    接单后取消可能会触发违约扣分；超时也会由系统自动判定。
-                                </p>
-                            </form>
+                        {task.status !== "completed" && task.status !== "canceled" && isParticipant ? (
+                            <CancelTaskForm taskId={task.id} />
                         ) : null}
 
-                        <p className="mt-4 text-xs text-zinc-600">
+                        <p className="mt-4 text-xs leading-5 text-slate-500">
                             状态流转：待接单 → 进行中 → 待验收 → 已完成；任意阶段可进入争议中。
                         </p>
                     </section>

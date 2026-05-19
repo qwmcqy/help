@@ -3,9 +3,14 @@ import { NextResponse, type NextRequest } from "next/server";
 
 function isProtectedPath(pathname: string) {
     return (
-        pathname.startsWith("/tasks") ||
-        pathname.startsWith("/dashboard") ||
-        pathname.startsWith("/admin")
+        pathname === "/tasks" ||
+        pathname.startsWith("/tasks/") ||
+        pathname === "/dashboard" ||
+        pathname.startsWith("/dashboard/") ||
+        pathname === "/admin" ||
+        pathname.startsWith("/admin/") ||
+        pathname === "/notifications" ||
+        pathname.startsWith("/notifications/")
     );
 }
 
@@ -49,7 +54,11 @@ export async function middleware(request: NextRequest) {
     if (isProtectedPath(pathname) && !user) {
         const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = "/auth";
-        redirectUrl.searchParams.set("next", pathname);
+        redirectUrl.search = "";
+        redirectUrl.searchParams.set(
+            "next",
+            `${pathname}${request.nextUrl.search}`,
+        );
         return NextResponse.redirect(redirectUrl);
     }
 

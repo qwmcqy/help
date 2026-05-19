@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { adminResolveDisputeAction } from "@/app/actions/taskActions";
+import AdminResolveForm from "./AdminResolveForm";
 
 type TaskSummary = {
     id: string;
@@ -24,6 +24,25 @@ type DisputeSummary = {
     created_at: string;
 };
 
+function labelStatus(s: string) {
+    switch (s) {
+        case "open":
+            return "待接单";
+        case "in_progress":
+            return "进行中";
+        case "awaiting_acceptance":
+            return "待验收";
+        case "completed":
+            return "已完成";
+        case "canceled":
+            return "已取消";
+        case "disputed":
+            return "争议中";
+        default:
+            return s;
+    }
+}
+
 export default async function AdminPage() {
     const supabase = await createSupabaseServerClient();
     const {
@@ -42,9 +61,9 @@ export default async function AdminPage() {
 
     if (profile?.role !== "admin") {
         return (
-            <div className="mx-auto w-full max-w-3xl px-4 py-8">
-                <h1 className="text-2xl font-semibold tracking-tight">管理员</h1>
-                <p className="mt-2 text-sm text-zinc-600">无权限访问。</p>
+            <div className="app-shell max-w-3xl">
+                <h1 className="page-title">管理员</h1>
+                <p className="page-subtitle">无权限访问。</p>
             </div>
         );
     }
@@ -90,29 +109,29 @@ export default async function AdminPage() {
     const taskRows = (tasks ?? []) as TaskSummary[];
 
     return (
-        <div className="mx-auto w-full max-w-5xl px-4 py-10">
-            <div className="overflow-hidden rounded-2xl bg-white/70 p-5 shadow-sm ring-1 ring-zinc-200/60">
-                <div className="-mx-5 -mt-5 mb-4 h-1.5 bg-gradient-to-r from-rose-400 via-amber-400 to-violet-400" />
-                <h1 className="text-2xl font-semibold tracking-tight">管理员：争议处理</h1>
-                <p className="mt-1 text-sm text-zinc-600">对“争议中”的任务进行裁决：完成支付或退款回滚。</p>
-            </div>
+        <div className="app-shell">
+            <section className="page-card p-5 sm:p-6">
+                <div className="eyebrow">Admin</div>
+                <h1 className="page-title mt-2">管理员：争议处理</h1>
+                <p className="page-subtitle">对“争议中”的任务进行裁决：完成支付或退款回滚。</p>
+            </section>
 
             <ul className="mt-6 space-y-3">
                 {taskRows.map((t) => (
-                    <li key={t.id} className="relative overflow-hidden rounded-2xl bg-white/70 p-4 pl-5 shadow-sm ring-1 ring-zinc-200/60">
-                        <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-rose-400 to-rose-600" />
+                    <li key={t.id} className="list-row pl-5">
+                        <div className="absolute inset-y-0 left-0 w-1.5 bg-rose-300" />
                         <div className="flex items-start justify-between gap-4">
                             <div className="min-w-0">
                                 <Link href={`/tasks/${t.id}`} className="block truncate font-semibold">
                                     {t.title}
                                 </Link>
-                                <div className="mt-2 text-sm text-zinc-700">
-                                    <span className="text-zinc-600">报酬</span>{" "}
-                                    <span className="font-semibold text-zinc-900">￥{(t.reward_cents / 100).toFixed(2)}</span>
+                                <div className="mt-2 text-sm text-slate-600">
+                                    <span>报酬</span>{" "}
+                                    <span className="font-semibold text-slate-950">￥{(t.reward_cents / 100).toFixed(2)}</span>
                                 </div>
                                 {disputeMap.get(t.id)?.reason ? (
-                                    <div className="mt-3 rounded-xl border border-zinc-200/70 bg-zinc-50/70 p-3 text-sm text-zinc-700">
-                                        <div className="text-xs font-medium text-zinc-600">争议原因</div>
+                                    <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                                        <div className="text-xs font-semibold text-slate-500">争议原因</div>
                                         <div className="mt-1 whitespace-pre-wrap">
                                             {disputeMap.get(t.id)?.reason}
                                         </div>
@@ -120,58 +139,45 @@ export default async function AdminPage() {
                                 ) : null}
                             </div>
 
-                            <form action={adminResolveDisputeAction} className="shrink-0">
-                                <input type="hidden" name="taskId" value={t.id} />
-                                <div className="flex flex-col gap-2">
-                                    <button
-                                        name="resolution"
-                                        value="complete"
-                                        className="rounded-full bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm"
-                                    >
-                                        裁决：完成并支付
-                                    </button>
-                                    <button
-                                        name="resolution"
-                                        value="refund"
-                                        className="rounded-full border border-zinc-200/70 bg-white/80 px-3 py-2 text-sm font-medium"
-                                    >
-                                        裁决：退款并回到待接单
-                                    </button>
-                                </div>
-                            </form>
+                            <AdminResolveForm taskId={t.id} />
                         </div>
                     </li>
                 ))}
             </ul>
 
-            <div className="mt-10 overflow-hidden rounded-2xl bg-white/70 p-5 shadow-sm ring-1 ring-zinc-200/60">
-                <div className="-mx-5 -mt-5 mb-4 h-1.5 bg-gradient-to-r from-red-400 via-rose-400 to-amber-400" />
-                <h2 className="text-lg font-semibold">AI 高风险提示</h2>
-                <p className="mt-1 text-sm text-zinc-600">
+            {!taskRows.length ? (
+                <div className="section-card mt-6 p-5 text-sm text-slate-500">
+                    当前没有待处理的争议任务。
+                </div>
+            ) : null}
+
+            <section className="section-card mt-10 p-5">
+                <h2 className="text-lg font-semibold text-slate-950">AI 高风险提示</h2>
+                <p className="mt-1 text-sm text-slate-600">
                     AI 审核仅做辅助，不直接封禁；建议结合人工复核。
                 </p>
-            </div>
+            </section>
             <ul className="mt-4 space-y-3">
                 {highRiskRows.map((r) => {
                     const t = highRiskTaskMap.get(r.task_id);
                     return (
-                        <li key={r.task_id} className="relative overflow-hidden rounded-2xl bg-white/70 p-4 pl-5 shadow-sm ring-1 ring-zinc-200/60">
-                            <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-red-400 to-red-600" />
+                        <li key={r.task_id} className="list-row pl-5">
+                            <div className="absolute inset-y-0 left-0 w-1.5 bg-rose-300" />
                             <div className="flex items-start justify-between gap-4">
                                 <div className="min-w-0">
                                     <Link href={`/tasks/${r.task_id}`} className="block truncate font-semibold">
                                         {t?.title ?? r.task_id}
                                     </Link>
-                                    <div className="mt-1 text-xs text-zinc-600">
+                                    <div className="mt-1 text-xs text-slate-500">
                                         风险：{r.risk_level}
-                                        {t?.status ? `；状态：${t.status}` : ""}
+                                        {t?.status ? `；状态：${labelStatus(t.status)}` : ""}
                                         {typeof t?.reward_cents === "number"
                                             ? `；报酬：￥${(t.reward_cents / 100).toFixed(2)}`
                                             : ""}
                                     </div>
                                     {r.reason ? (
-                                        <div className="mt-3 rounded-xl border border-zinc-200/70 bg-zinc-50/70 p-3 text-sm text-zinc-700">
-                                            <div className="text-xs font-medium text-zinc-600">原因</div>
+                                        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                                            <div className="text-xs font-semibold text-slate-500">原因</div>
                                             <div className="mt-1 whitespace-pre-wrap">{r.reason}</div>
                                         </div>
                                     ) : null}
@@ -181,6 +187,12 @@ export default async function AdminPage() {
                     );
                 })}
             </ul>
+
+            {!highRiskRows.length ? (
+                <div className="section-card mt-4 p-5 text-sm text-slate-500">
+                    当前没有 AI 高风险提示。
+                </div>
+            ) : null}
         </div>
     );
 }

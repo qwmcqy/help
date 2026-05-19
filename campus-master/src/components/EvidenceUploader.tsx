@@ -10,6 +10,19 @@ function sanitizeFilename(name: string) {
     return name.replace(/[^a-zA-Z0-9._-]+/g, "_");
 }
 
+function splitFilename(name: string) {
+    const safeName = sanitizeFilename(name);
+    const dotIndex = safeName.lastIndexOf(".");
+    if (dotIndex <= 0) {
+        return { base: safeName || "evidence", ext: "png" };
+    }
+
+    return {
+        base: safeName.slice(0, dotIndex) || "evidence",
+        ext: safeName.slice(dotIndex + 1) || "png",
+    };
+}
+
 export default function EvidenceUploader({
     taskId,
     disabled,
@@ -27,7 +40,13 @@ export default function EvidenceUploader({
 
         setError(null);
 
-        const picked = Array.from(files).slice(0, MAX_FILES);
+        const availableSlots = MAX_FILES - paths.length;
+        if (availableSlots <= 0) {
+            setError(`最多只能上传 ${MAX_FILES} 张图片。`);
+            return;
+        }
+
+        const picked = Array.from(files).slice(0, availableSlots);
 
         const {
             data: { user },
@@ -51,11 +70,12 @@ export default function EvidenceUploader({
                     throw new Error(`图片大小不能超过 ${MAX_MB}MB。`);
                 }
 
-                const ext = file.name.includes(".")
-                    ? file.name.split(".").pop()
-                    : "png";
-                const safeName = sanitizeFilename(file.name);
-                const objectPath = `${taskId}/${user.id}/${Date.now()}-${safeName}.${ext}`;
+                const { base, ext } = splitFilename(file.name);
+                const uniqueId =
+                    typeof crypto.randomUUID === "function"
+                        ? crypto.randomUUID()
+                        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                const objectPath = `${taskId}/${user.id}/${uniqueId}-${base}.${ext}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from("task-evidence")
@@ -82,15 +102,21 @@ export default function EvidenceUploader({
 
     return (
         <div className="space-y-2">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-2">
                 <input
                     type="file"
                     accept="image/*"
                     multiple
                     disabled={busy || disabled || paths.length >= MAX_FILES}
-                    onChange={(e) => void onPickFiles(e.target.files)}
+                    onChange={(e) => {
+                        const input = e.currentTarget;
+                        void onPickFiles(input.files).finally(() => {
+                            input.value = "";
+                        });
+                    }}
+                    className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-800 hover:file:bg-slate-100"
                 />
-                <div className="text-xs text-zinc-600">
+                <div className="text-xs text-slate-500">
                     最多 {MAX_FILES} 张，每张 ≤ {MAX_MB}MB
                 </div>
             </div>
@@ -98,13 +124,13 @@ export default function EvidenceUploader({
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
             {paths.length ? (
-                <ul className="space-y-1 text-sm text-zinc-700">
+                <ul className="space-y-1 text-sm text-slate-600">
                     {paths.map((p) => (
-                        <li key={p} className="flex items-center justify-between gap-2">
+                        <li key={p} className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
                             <span className="truncate">{p}</span>
                             <button
                                 type="button"
-                                className="shrink-0 text-xs underline"
+                                className="soft-link shrink-0 text-xs"
                                 onClick={() => removePath(p)}
                                 disabled={busy || disabled}
                             >
@@ -115,10 +141,10 @@ export default function EvidenceUploader({
                     ))}
                 </ul>
             ) : (
-                <p className="text-xs text-zinc-600">未上传图片（可只提交文字凭证）。</p>
+                <p className="text-xs text-slate-500">未上传图片（可只提交文字凭证）。</p>
             )}
 
-            {busy ? <p className="text-xs text-zinc-600">上传中...</p> : null}
+            {busy ? <p className="text-xs text-slate-500">上传中…</p> : null}
         </div>
     );
 }
