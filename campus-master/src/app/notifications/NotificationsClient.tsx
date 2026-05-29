@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { labelStatus } from "@/lib/taskDisplay";
 
 type NotificationRow = {
     id: string;
@@ -57,25 +58,6 @@ function typeBadgeClass(type: string) {
             return "border-rose-200 bg-rose-50 text-rose-700";
         default:
             return "border-slate-200 bg-slate-50 text-slate-600";
-    }
-}
-
-function labelStatus(status: string) {
-    switch (status) {
-        case "open":
-            return "待接单";
-        case "in_progress":
-            return "进行中";
-        case "awaiting_acceptance":
-            return "待验收";
-        case "completed":
-            return "已完成";
-        case "canceled":
-            return "已取消";
-        case "disputed":
-            return "争议中";
-        default:
-            return status;
     }
 }
 
@@ -180,12 +162,10 @@ export default function NotificationsClient() {
 
     return (
         <div className="app-shell">
-            <section className="page-card p-5 sm:p-6">
+            <section>
                 <div className="eyebrow">Notifications</div>
                 <h1 className="page-title mt-2">最新通知</h1>
-                <p className="page-subtitle">
-                    展示最近 50 条；新通知会实时出现。
-                </p>
+                <p className="page-subtitle">最近 50 条，新通知实时推送。</p>
             </section>
 
             {loading ? (
@@ -206,7 +186,7 @@ export default function NotificationsClient() {
                 </div>
             ) : null}
 
-            <ul className="mt-6 space-y-3">
+            <ul className="mt-6 space-y-2.5">
                 {items.map((n) => {
                     const href = n.reference_id
                         ? `/tasks/${n.reference_id}${n.type === "message" ? "#chat" : ""}`
@@ -214,52 +194,34 @@ export default function NotificationsClient() {
                     const body = formatBody(n.body);
 
                     return (
-                        <li
-                            key={n.id}
-                            className="list-row pl-5"
-                        >
-                            <div
-                                className={`absolute inset-y-0 left-0 w-1.5 ${typeAccentClass(
-                                    n.type,
-                                )}`}
-                            />
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                <div className="min-w-0 flex-1">
-                                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                                        <span className={`status-pill ${typeBadgeClass(n.type)}`}>
-                                            {typeLabel(n.type)}
-                                        </span>
-                                        <span className="text-xs text-slate-500">
-                                            {formatTime(n.created_at)}
-                                        </span>
-                                    </div>
-                                    {href ? (
-                                        <Link
-                                            href={href}
-                                            className="block underline-offset-4 hover:underline"
-                                        >
-                                            <span className="block font-semibold text-slate-950">
-                                                {n.title}
-                                            </span>
-                                            {body ? (
-                                                <span className="mt-1 block whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
-                                                    {body}
-                                                </span>
-                                            ) : null}
-                                        </Link>
-                                    ) : (
-                                        <div>
-                                            <span className="block font-semibold text-slate-950">
-                                                {n.title}
-                                            </span>
-                                            {body ? (
-                                                <span className="mt-1 block whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
-                                                    {body}
-                                                </span>
-                                            ) : null}
-                                        </div>
-                                    )}
+                        <li key={n.id} className="list-row pl-5">
+                            <div className={`absolute inset-y-0 left-0 w-1 rounded-l-full ${typeAccentClass(n.type)}`} />
+                            <div className="flex flex-col gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className={`status-pill ${typeBadgeClass(n.type)}`}>
+                                        {typeLabel(n.type)}
+                                    </span>
+                                    <span className="text-xs text-slate-400">{formatTime(n.created_at)}</span>
                                 </div>
+                                {href ? (
+                                    <Link href={href} className="block">
+                                        <span className="block font-semibold text-slate-950">{n.title}</span>
+                                        {body ? (
+                                            <span className="mt-1 block whitespace-pre-wrap text-sm leading-6 text-slate-500">
+                                                {body}
+                                            </span>
+                                        ) : null}
+                                    </Link>
+                                ) : (
+                                    <div>
+                                        <span className="block font-semibold text-slate-950">{n.title}</span>
+                                        {body ? (
+                                            <span className="mt-1 block whitespace-pre-wrap text-sm leading-6 text-slate-500">
+                                                {body}
+                                            </span>
+                                        ) : null}
+                                    </div>
+                                )}
                             </div>
                         </li>
                     );

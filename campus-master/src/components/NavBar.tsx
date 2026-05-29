@@ -3,116 +3,113 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function NavBar({
-    isAuthed,
-    isAdmin,
+function NavPill({
+  href,
+  active,
+  highlight,
+  children,
 }: {
-    isAuthed: boolean;
-    isAdmin: boolean;
+  href: string;
+  active: boolean;
+  highlight?: boolean;
+  children: React.ReactNode;
 }) {
-    const pathname = usePathname();
+  const cls = active
+    ? "nav-link-active"
+    : highlight
+      ? "inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 hover:shadow-md"
+      : "nav-link";
+  return (
+    <Link href={href} aria-current={active ? "page" : undefined} className={cls}>
+      {children}
+    </Link>
+  );
+}
 
-    const isTasksNew = pathname === "/tasks/new";
-    const isTasks = pathname === "/tasks" || (pathname.startsWith("/tasks/") && !isTasksNew);
-    const isNotifications = pathname === "/notifications";
-    const isDashboard = pathname === "/dashboard";
-    const isAccount = pathname === "/dashboard/account";
-    const isAdminPage = pathname === "/admin";
-    const isAuthPage = pathname.startsWith("/auth");
+export default function NavBar({
+  isAuthed,
+  isAdmin,
+}: {
+  isAuthed: boolean;
+  isAdmin: boolean;
+}) {
+  const pathname = usePathname();
 
-    function pillClass(active: boolean) {
-        return active
-            ? "rounded-lg border border-teal-700 bg-teal-700 px-3 py-2 font-semibold text-white shadow-sm"
-            : "rounded-lg border border-slate-200 bg-white px-3 py-2 font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950";
-    }
+  const isActive = (path: string) =>
+    pathname === path || (path !== "/" && pathname.startsWith(path + "/"));
 
-    function ctaClass(active: boolean) {
-        return active
-            ? "rounded-lg border border-teal-700 bg-teal-700 px-3 py-2 font-semibold text-white shadow-sm"
-            : "rounded-lg border border-slate-200 bg-white px-3 py-2 font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50";
-    }
-
+  if (!isAuthed) {
     return (
-        <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur">
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-                <Link
-                    href="/"
-                    className="inline-flex items-center gap-2 text-base font-semibold tracking-normal text-slate-950"
-                >
-                    <span className="grid h-8 w-8 place-items-center rounded-lg bg-teal-700 text-sm font-bold text-white shadow-sm">
-                        万
-                    </span>
-                    <span>校园“万事达”</span>
-                </Link>
-                <nav className="-mx-1 flex items-center justify-between gap-3 overflow-x-auto px-1 pb-1 text-sm lg:mx-0 lg:flex-1 lg:overflow-visible lg:pb-0">
-                    {isAuthed ? (
-                        <>
-                            <div className="flex shrink-0 items-center gap-1">
-                                <Link
-                                    href="/tasks"
-                                    aria-current={isTasks ? "page" : undefined}
-                                    className={pillClass(isTasks)}
-                                >
-                                    任务大厅
-                                </Link>
-                                <Link
-                                    href="/tasks/new"
-                                    aria-current={isTasksNew ? "page" : undefined}
-                                    className={ctaClass(isTasksNew)}
-                                >
-                                    发布任务
-                                </Link>
-                                <Link
-                                    href="/dashboard"
-                                    aria-current={isDashboard ? "page" : undefined}
-                                    className={pillClass(isDashboard)}
-                                >
-                                    任务看板
-                                </Link>
-                            </div>
-                            <div className="ml-auto flex shrink-0 items-center gap-1">
-                                <Link
-                                    href="/notifications"
-                                    aria-current={isNotifications ? "page" : undefined}
-                                    className={pillClass(isNotifications)}
-                                >
-                                    通知
-                                </Link>
-                                <Link
-                                    href="/dashboard/account"
-                                    aria-current={isAccount ? "page" : undefined}
-                                    className={pillClass(isAccount)}
-                                >
-                                    账号
-                                </Link>
-                                {isAdmin ? (
-                                    <Link
-                                        href="/admin"
-                                        aria-current={isAdminPage ? "page" : undefined}
-                                        className={pillClass(isAdminPage)}
-                                    >
-                                        管理员
-                                    </Link>
-                                ) : null}
-                                <Link
-                                    href="/auth?mode=logout"
-                                    className={pillClass(isAuthPage)}
-                                >
-                                    退出
-                                </Link>
-                            </div>
-                        </>
-                    ) : (
-                        <Link
-                            href="/auth"
-                            aria-current={isAuthPage ? "page" : undefined}
-                            className={ctaClass(isAuthPage)}
-                        >
-                            登录/注册
-                        </Link>
-                    )}
-                </nav>
-            </div>
-        </header>
+      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2.5 text-base font-bold tracking-tight text-slate-950"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-teal-600 text-sm font-bold text-white shadow-sm">
+              万
+            </span>
+            <span className="hidden sm:inline">校园"万事达"</span>
+          </Link>
+          <Link href="/auth" className="btn-primary">
+            登录/注册
+          </Link>
+        </div>
+      </header>
     );
+  }
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
+      <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-2.5 sm:px-6 lg:px-8">
+        {/* Logo */}
+        <Link
+          href="/"
+          className="inline-flex shrink-0 items-center gap-2.5 text-base font-bold tracking-tight text-slate-950"
+        >
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-teal-600 text-sm font-bold text-white shadow-sm">
+            万
+          </span>
+          <span className="hidden lg:inline">校园"万事达"</span>
+        </Link>
+
+        {/* Primary nav */}
+        <nav className="flex items-center gap-1" aria-label="主导航">
+          <NavPill href="/tasks" active={isActive("/tasks")}>
+            任务大厅
+          </NavPill>
+          <NavPill href="/tasks/new" active={isActive("/tasks/new")} highlight>
+            发布任务
+          </NavPill>
+          <NavPill href="/dashboard" active={isActive("/dashboard")}>
+            任务看板
+          </NavPill>
+        </nav>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Secondary nav */}
+        <nav className="flex items-center gap-1" aria-label="辅助导航">
+          <NavPill href="/notifications" active={isActive("/notifications")}>
+            通知
+          </NavPill>
+          <NavPill href="/dashboard/account" active={isActive("/dashboard/account")}>
+            账号
+          </NavPill>
+          {isAdmin && (
+            <NavPill href="/admin" active={isActive("/admin")}>
+              管理员
+            </NavPill>
+          )}
+          <Link
+            href="/auth?mode=logout"
+            className="btn-ghost ml-1 text-slate-400 hover:text-slate-600"
+          >
+            退出
+          </Link>
+        </nav>
+      </div>
+    </header>
+  );
 }

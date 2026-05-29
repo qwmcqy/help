@@ -3,37 +3,33 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import NewTaskForm from "./NewTaskForm";
 
 export default async function NewTaskPage() {
-    const supabase = await createSupabaseServerClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-        redirect("/auth?next=/tasks/new");
-    }
+  if (!user) {
+    redirect("/auth?next=/tasks/new");
+  }
 
-    return (
-        <div className="app-shell">
-            <section className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-                <div className="page-card p-6">
-                    <div className="eyebrow">Create task</div>
-                    <h1 className="page-title mt-2">发布任务</h1>
-                    <p className="page-subtitle">
-                        发布时会冻结对应金额（单位：分），任务完成后自动划拨。
-                    </p>
-                    <div className="mt-6 space-y-3 text-sm text-slate-600">
-                        <div className="rounded-lg border border-teal-100 bg-teal-50/70 p-3">
-                            建议写清楚时间、地点、交付方式和验收标准。
-                        </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                            报酬使用“分”为单位，例如 500 表示 5.00 元。
-                        </div>
-                    </div>
-                </div>
-                <div>
-                <NewTaskForm />
-                </div>
-            </section>
+  return (
+    <div className="app-shell max-w-2xl">
+      <div className="mb-6">
+        <div className="eyebrow">Create Task</div>
+        <h1 className="page-title mt-2">发布任务</h1>
+        <p className="page-subtitle">发布时将冻结对应金额，任务完成后自动划拨。</p>
+      </div>
+
+      <div className="mb-6 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border border-teal-100 bg-teal-50/50 p-3 text-sm text-slate-600 ring-1 ring-teal-100/30">
+          <span className="font-semibold text-teal-700">提示</span>：写清楚时间、地点、交付方式
         </div>
-    );
+        <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm text-slate-500 ring-1 ring-slate-100/50">
+          报酬单位：<span className="font-semibold text-slate-950">分</span>，如 500 = 5.00 元
+        </div>
+      </div>
+
+      <NewTaskForm />
+    </div>
+  );
 }
