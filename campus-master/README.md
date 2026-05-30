@@ -8,7 +8,7 @@
 - 任务状态机：待接单 → 进行中 → 待验收 → 已完成；任意阶段可进入争议中
 - 资金托管：发布冻结、完成划拨、流水记录（通过 Postgres 函数保证原子性）
 - 实时通知：基于 Supabase Realtime 订阅 `notifications`
-- AI 审核（可选）：配置 `OPENAI_API_KEY` 后对任务标题/描述生成风险提示
+- AI 辅助审核（可选）：配置 `OPENAI_API_KEY` 后调用大模型识别任务描述中的违规、暴力、违法交易等风险，并给出风险等级、命中类别和人工复核建议
 
 ## 本地运行
 
@@ -25,6 +25,17 @@ npm install
 - 复制 `.env.example` 为 `.env.local`，填入：
 	- `NEXT_PUBLIC_SUPABASE_URL`
 	- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+	- `OPENAI_API_KEY`（可选，启用 AI 辅助审核）
+	- `OPENAI_MODEL`（可选，默认 `gpt-4o-mini`）
+	- `OPENAI_BASE_URL`（可选，默认 OpenAI；使用 DeepSeek 时填 `https://api.deepseek.com`）
+
+DeepSeek 配置示例：
+
+```env
+OPENAI_API_KEY=你的_DeepSeek_API_Key
+OPENAI_BASE_URL=https://api.deepseek.com
+OPENAI_MODEL=deepseek-v4-flash
+```
 
 细节见 [supabase/SETUP.md](supabase/SETUP.md)
 

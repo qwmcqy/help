@@ -141,7 +141,7 @@ export default async function DashboardPage() {
       {/* Role hint */}
       {profile?.role !== "helper" ? (
         <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-800 ring-1 ring-amber-100/50">
-          当前角色非"接单方"，无法接单。前往
+          当前角色非&quot;接单方&quot;，无法接单。前往
           <Link href="/dashboard/account" className="ml-1 font-semibold underline">
             账号与角色
           </Link>

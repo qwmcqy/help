@@ -49,7 +49,7 @@ export default function NavBar({
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-teal-600 text-sm font-bold text-white shadow-sm">
               万
             </span>
-            <span className="hidden sm:inline">校园"万事达"</span>
+            <span className="hidden sm:inline">校园&quot;万事达&quot;</span>
           </Link>
           <Link href="/auth" className="btn-primary">
             登录/注册
@@ -70,7 +70,7 @@ export default function NavBar({
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-teal-600 text-sm font-bold text-white shadow-sm">
             万
           </span>
-          <span className="hidden lg:inline">校园"万事达"</span>
+          <span className="hidden lg:inline">校园&quot;万事达&quot;</span>
         </Link>
 
         {/* Primary nav */}

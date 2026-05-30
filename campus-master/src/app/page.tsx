@@ -20,7 +20,7 @@ export default async function Home() {
           北京邮电大学 · 课程设计项目
         </span>
         <h1 className="mt-6 max-w-2xl text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-          校园<span className="text-teal-600">"万事达"</span>
+          校园<span className="text-teal-600">&quot;万事达&quot;</span>
         </h1>
         <p className="mt-4 text-xl font-medium text-slate-500">互助与众包任务平台</p>
         <p className="mt-4 max-w-lg text-base leading-7 text-slate-500">

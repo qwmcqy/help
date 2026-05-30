@@ -4,7 +4,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import AdminResolveForm from "./AdminResolveForm";
 import {
   labelStatus,
-  statusAccentClass,
   statusBadgeClass,
 } from "@/lib/taskDisplay";
 
@@ -20,6 +19,7 @@ type HighRiskAudit = {
   task_id: string;
   risk_level: string;
   reason: string | null;
+  raw: unknown;
   updated_at: string;
 };
 
@@ -29,13 +29,31 @@ type DisputeSummary = {
   created_at: string;
 };
 
-function formatTime(value: string) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+function auditRaw(raw: unknown) {
+  if (!isRecord(raw) || !isRecord(raw.audit)) return null;
+  return raw.audit;
+}
+
+function actionLabel(action: unknown) {
+  switch (action) {
+    case "reject":
+      return "建议拒绝/下架";
+    case "review":
+      return "建议人工复核";
+    case "allow":
+      return "建议通过";
+    default:
+      return "建议人工复核";
+  }
 }
 
 export default async function AdminPage() {
@@ -82,11 +100,11 @@ export default async function AdminPage() {
   const disputeRows = (disputes ?? []) as DisputeSummary[];
   const disputeMap = new Map(disputeRows.map((d) => [d.task_id, d]));
 
-  // --- High risk AI audits ---
+  // --- Medium/high risk AI audits ---
   const { data: highRisk } = await supabase
     .from("ai_audits")
-    .select("task_id,risk_level,reason,updated_at")
-    .eq("risk_level", "high")
+    .select("task_id,risk_level,reason,raw,updated_at")
+    .in("risk_level", ["medium", "high"])
     .order("updated_at", { ascending: false })
     .limit(50);
   const highRiskRows = (highRisk ?? []) as HighRiskAudit[];
@@ -102,7 +120,7 @@ export default async function AdminPage() {
       <div>
         <div className="eyebrow">Admin</div>
         <h1 className="page-title mt-2">管理员工作台</h1>
-        <p className="page-subtitle">处理争议裁决，查看 AI 高风险提示。</p>
+        <p className="page-subtitle">处理争议裁决，查看 AI 中高风险提示。</p>
       </div>
 
       {/* Disputed tasks */}
@@ -155,15 +173,18 @@ export default async function AdminPage() {
         )}
       </section>
 
-      {/* High risk AI audits */}
+      {/* Medium/high risk AI audits */}
       <section className="mt-10">
-        <h2 className="text-lg font-bold text-slate-950">AI 高风险提示</h2>
-        <p className="text-sm text-slate-500">AI 审核标记为高风险的近期任务，仅供人工复核参考。</p>
+        <h2 className="text-lg font-bold text-slate-950">AI 中高风险提示</h2>
+        <p className="text-sm text-slate-500">AI 审核标记为中/高风险的近期任务，仅供人工复核参考。</p>
 
         {highRiskRows.length > 0 ? (
           <ul className="mt-4 space-y-3">
             {highRiskRows.map((r) => {
               const t = highRiskTaskMap.get(r.task_id);
+              const raw = auditRaw(r.raw);
+              const categories = stringArray(raw?.categories);
+              const evidence = stringArray(raw?.evidence);
               return (
                 <li key={r.task_id} className="list-row pl-5">
                   <div className="absolute inset-y-0 left-0 w-1.5 bg-rose-300 rounded-l-full" />
@@ -178,14 +199,35 @@ export default async function AdminPage() {
                       <span className="status-pill border-rose-200 bg-rose-50 text-rose-700">
                         高风险
                       </span>
+                      {raw ? <span>{raw.flagged ? "疑似违规" : "待复核"}</span> : null}
+                      {raw ? <span>{actionLabel(raw.suggestedAction)}</span> : null}
                       {t?.status ? <span>{labelStatus(t.status)}</span> : null}
                       {typeof t?.reward_cents === "number"
                         ? <span>￥{(t.reward_cents / 100).toFixed(2)}</span>
                         : null}
                     </div>
+                    {categories.length ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {categories.map((category) => (
+                          <span key={category} className="status-pill border-slate-200 bg-white text-slate-600">
+                            {category}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                     {r.reason ? (
                       <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                        <p className="text-sm leading-6 text-slate-600">{r.reason}</p>
+                        <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600">{r.reason}</p>
+                      </div>
+                    ) : null}
+                    {evidence.length ? (
+                      <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50 p-3">
+                        <div className="text-xs font-semibold text-amber-800">模型依据片段</div>
+                        <ul className="mt-2 list-disc space-y-1 pl-4 text-sm leading-6 text-amber-900">
+                          {evidence.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
                       </div>
                     ) : null}
                   </div>
@@ -195,7 +237,7 @@ export default async function AdminPage() {
           </ul>
         ) : (
           <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 py-8 text-center text-sm text-slate-400">
-            当前没有 AI 高风险提示
+            当前没有 AI 中高风险提示
           </div>
         )}
       </section>

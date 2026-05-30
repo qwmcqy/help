@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
     topUpWithStateAction,
@@ -26,26 +26,17 @@ function useRefreshOnSuccess(state: SimpleActionState) {
 
 export function RoleSwitchForm({ currentRole }: { currentRole?: string | null }) {
     const initialRole = currentRole ?? "requester";
-    const [selectValue, setSelectValue] = useState(initialRole);
     const [state, formAction] = useActionState(
         updateRoleWithStateAction,
         initialState,
     );
     useRefreshOnSuccess(state);
 
-    // Sync select value when currentRole prop changes (after router.refresh)
-    useEffect(() => {
-        if (currentRole) {
-            setSelectValue(currentRole);
-        }
-    }, [currentRole]);
-
     return (
         <form action={formAction} className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center" key={currentRole}>
             <select
                 name="role"
-                value={selectValue}
-                onChange={(e) => setSelectValue(e.target.value)}
+                defaultValue={initialRole}
                 className="field-control mt-0"
             >
                 <option value="requester">需求方（发布任务）</option>
