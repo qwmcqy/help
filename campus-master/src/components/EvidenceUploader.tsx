@@ -96,8 +96,20 @@ export default function EvidenceUploader({
         }
     }
 
-    function removePath(p: string) {
-        setPaths((prev) => prev.filter((x) => x !== p));
+    async function removePath(p: string) {
+        setBusy(true);
+        setError(null);
+        try {
+            const { error: removeError } = await supabase.storage
+                .from("task-evidence")
+                .remove([p]);
+            if (removeError) throw removeError;
+            setPaths((prev) => prev.filter((x) => x !== p));
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "移除失败");
+        } finally {
+            setBusy(false);
+        }
     }
 
     return (
@@ -131,7 +143,7 @@ export default function EvidenceUploader({
                             <button
                                 type="button"
                                 className="soft-link shrink-0 text-xs"
-                                onClick={() => removePath(p)}
+                                onClick={() => void removePath(p)}
                                 disabled={busy || disabled}
                             >
                                 移除

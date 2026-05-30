@@ -79,7 +79,7 @@ export default async function TasksPage({
       </section>
 
       {/* Filters */}
-      <section className="mt-5 rounded-xl border border-slate-200/60 bg-white/70 p-4 shadow-sm ring-1 ring-slate-100/30">
+      <section className="mt-5 rounded-lg border border-slate-200/60 bg-white/70 p-4 shadow-sm ring-1 ring-slate-100/30">
         <form className="flex flex-wrap items-end gap-3">
           <div className="min-w-[140px]">
             <label className="text-xs font-medium text-slate-500">状态筛选</label>
@@ -117,7 +117,7 @@ export default async function TasksPage({
 
       {/* Error */}
       {error ? (
-        <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+        <div className="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
           {error.message}
         </div>
       ) : null}
@@ -131,10 +131,10 @@ export default async function TasksPage({
                 className={`absolute inset-y-0 left-0 w-1 rounded-l-full ${statusAccentClass(t.status)}`}
               />
               <Link href={`/tasks/${t.id}`} className="block">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-semibold text-slate-950">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="break-words text-base font-semibold text-slate-950">
                         {t.title}
                       </span>
                       {t.category ? (
@@ -150,7 +150,7 @@ export default async function TasksPage({
                       <span className="text-xs text-slate-400">{timeAgo(t.created_at)}</span>
                     </div>
                   </div>
-                  <div className="shrink-0 text-right">
+                  <div className="flex shrink-0 items-center justify-between gap-3 sm:block sm:text-right">
                     <div className="text-lg font-bold text-slate-950">
                       ￥{(t.reward_cents / 100).toFixed(2)}
                     </div>

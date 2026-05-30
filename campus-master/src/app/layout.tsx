@@ -59,7 +59,7 @@ async function RootShell({ children }: { children: React.ReactNode }) {
       <NavBar isAuthed={Boolean(user)} isAdmin={isAdmin} />
       <main className="flex-1">{children}</main>
       <footer className="border-t border-slate-200/80 bg-white/75">
-        <div className="mx-auto w-full max-w-6xl px-4 py-5 text-xs text-slate-500 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-6xl break-words px-4 py-5 text-xs text-slate-500 sm:px-6 lg:px-8">
           Web 开发课程设计：校园“万事达”互助与众包任务平台
         </div>
       </footer>

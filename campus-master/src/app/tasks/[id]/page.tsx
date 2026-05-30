@@ -266,7 +266,7 @@ export default async function TaskDetailPage({
               </span>
             </div>
           </div>
-          <div className="shrink-0 rounded-xl bg-teal-50 px-5 py-3 text-center ring-1 ring-teal-100/60">
+          <div className="shrink-0 rounded-lg bg-teal-50 px-5 py-3 text-center ring-1 ring-teal-100/60">
             <div className="text-xs font-medium text-teal-600">报酬（已托管）</div>
             <div className="mt-1 text-2xl font-bold text-teal-700">
               ￥{(task.reward_cents / 100).toFixed(2)}

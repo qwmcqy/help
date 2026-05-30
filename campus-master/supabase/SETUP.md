@@ -1,7 +1,7 @@
 # Supabase 设置（本项目）
 
 1. 在 Supabase 创建项目
-2. 打开 **SQL Editor**，执行 [supabase/schema.sql](supabase/schema.sql)
+2. 打开 **SQL Editor**，执行 [schema.sql](schema.sql)
 3. 在 Supabase 控制台获取：
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
    - anon public key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -18,9 +18,17 @@ update public.profiles set role='admin' where id = '<user_uuid>';
 npm run dev
 ```
 
+## 已有项目升级
+
+如果数据库已经执行过旧版 `schema.sql`，请在 Supabase SQL Editor 额外执行：
+
+- [patches/20260530_security_and_audit_visibility.sql](patches/20260530_security_and_audit_visibility.sql)
+
+该补丁会阻止普通用户将自己提升为管理员，并允许任务双方查看 AI 审核结果。
+
 ## 凭证图片上传（Storage）
 
-- 本项目使用 Storage bucket：`task-evidence`（在 [supabase/schema.sql](supabase/schema.sql) 中已包含创建与 RLS 策略）
+- 本项目使用 Storage bucket：`task-evidence`（在 [schema.sql](schema.sql) 中已包含创建与 RLS 策略）
 - 上传路径约定：`{taskId}/{userId}/{timestamp}-{filename}`
 - 读取策略：仅任务参与者（需求方/接单方）与管理员可读；写入策略：仅接单方在 `in_progress` 状态可上传
 

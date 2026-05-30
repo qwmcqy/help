@@ -135,7 +135,7 @@ function StepCard({
   desc: string;
 }) {
   return (
-    <div className="relative rounded-xl border border-slate-200/60 bg-white p-6 pt-12 shadow-sm ring-1 ring-slate-100/30">
+    <div className="relative rounded-lg border border-slate-200/60 bg-white p-6 pt-12 shadow-sm ring-1 ring-slate-100/30">
       <span className="absolute left-6 top-4 text-3xl font-extrabold text-teal-100">
         {String(step).padStart(2, "0")}
       </span>

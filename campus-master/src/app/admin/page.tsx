@@ -56,6 +56,16 @@ function actionLabel(action: unknown) {
   }
 }
 
+function riskLabel(risk: string) {
+  return risk === "high" ? "高风险" : "中风险";
+}
+
+function riskBadgeClass(risk: string) {
+  return risk === "high"
+    ? "border-rose-200 bg-rose-50 text-rose-700"
+    : "border-amber-200 bg-amber-50 text-amber-700";
+}
+
 export default async function AdminPage() {
   const supabase = await createSupabaseServerClient();
   const {
@@ -167,7 +177,7 @@ export default async function AdminPage() {
             })}
           </ul>
         ) : (
-          <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 py-8 text-center text-sm text-slate-400">
+          <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 py-8 text-center text-sm text-slate-400">
             当前没有待处理的争议任务
           </div>
         )}
@@ -196,8 +206,8 @@ export default async function AdminPage() {
                       {t?.title ?? r.task_id}
                     </Link>
                     <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                      <span className="status-pill border-rose-200 bg-rose-50 text-rose-700">
-                        高风险
+                      <span className={`status-pill ${riskBadgeClass(r.risk_level)}`}>
+                        {riskLabel(r.risk_level)}
                       </span>
                       {raw ? <span>{raw.flagged ? "疑似违规" : "待复核"}</span> : null}
                       {raw ? <span>{actionLabel(raw.suggestedAction)}</span> : null}
@@ -236,7 +246,7 @@ export default async function AdminPage() {
             })}
           </ul>
         ) : (
-          <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 py-8 text-center text-sm text-slate-400">
+          <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 py-8 text-center text-sm text-slate-400">
             当前没有 AI 中高风险提示
           </div>
         )}

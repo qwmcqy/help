@@ -73,7 +73,7 @@ export default function AuthPage() {
           <h1 className="mt-4 text-xl font-bold tracking-tight text-slate-950">退出登录</h1>
           <p className="mt-2 text-sm text-slate-500">确认退出当前账号？</p>
           {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
-          <button onClick={logout} disabled={busy} className="btn-primary mt-5 w-full">
+          <button type="button" onClick={logout} disabled={busy} className="btn-primary mt-5 w-full">
             {busy ? "退出中…" : "确认退出"}
           </button>
         </div>
@@ -137,7 +137,7 @@ export default function AuthPage() {
 
           {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
-          <button disabled={busy} className="btn-primary w-full">
+          <button type="submit" disabled={busy} className="btn-primary w-full">
             {busy ? "处理中…" : isLogin ? "登录" : "注册并进入"}
           </button>
         </form>

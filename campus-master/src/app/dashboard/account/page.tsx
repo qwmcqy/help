@@ -125,13 +125,13 @@ export default async function AccountPage() {
         <div className="section-card p-5">
           <h2 className="text-sm font-semibold text-slate-900">虚拟余额</h2>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-teal-50 p-4 ring-1 ring-teal-100/50">
+            <div className="rounded-lg bg-teal-50 p-4 ring-1 ring-teal-100/50">
               <div className="text-xs font-medium text-teal-600">可用余额</div>
               <div className="mt-1 text-2xl font-bold text-teal-700">
                 ￥{((account?.available_cents ?? 0) / 100).toFixed(2)}
               </div>
             </div>
-            <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-100/50">
+            <div className="rounded-lg bg-slate-50 p-4 ring-1 ring-slate-100/50">
               <div className="text-xs font-medium text-slate-500">冻结中</div>
               <div className="mt-1 text-2xl font-bold text-slate-700">
                 ￥{((account?.frozen_cents ?? 0) / 100).toFixed(2)}

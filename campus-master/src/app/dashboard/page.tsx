@@ -140,7 +140,7 @@ export default async function DashboardPage() {
 
       {/* Role hint */}
       {profile?.role !== "helper" ? (
-        <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-800 ring-1 ring-amber-100/50">
+        <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-800 ring-1 ring-amber-100/50">
           当前角色非&quot;接单方&quot;，无法接单。前往
           <Link href="/dashboard/account" className="ml-1 font-semibold underline">
             账号与角色
@@ -156,7 +156,7 @@ export default async function DashboardPage() {
           return (
             <div
               key={col.status}
-              className="rounded-xl border border-slate-200/50 bg-slate-50/60 p-4 ring-1 ring-slate-100/30"
+              className="rounded-lg border border-slate-200/50 bg-slate-50/60 p-4 ring-1 ring-slate-100/30"
             >
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -201,7 +201,7 @@ function StatCard({
   accent: string;
 }) {
   return (
-    <div className={`rounded-xl px-5 py-4 ring-1 ring-slate-100/30 ${accent} bg-white/80 border border-slate-200/50`}>
+    <div className={`rounded-lg px-5 py-4 ring-1 ring-slate-100/30 ${accent} bg-white/80 border border-slate-200/50`}>
       <div className="text-xs font-medium opacity-70">{label}</div>
       <div className="mt-1 text-3xl font-bold tracking-tight">{value}</div>
     </div>
