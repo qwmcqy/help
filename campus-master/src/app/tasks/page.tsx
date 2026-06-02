@@ -6,6 +6,8 @@ import {
   statusAccentClass,
   statusBadgeClass,
 } from "@/lib/taskDisplay";
+import { formatDistance } from "@/lib/geohash";
+import NearbyControl from "./NearbyControl";
 
 type TaskListItem = {
   id: string;
@@ -14,6 +16,7 @@ type TaskListItem = {
   reward_cents: number;
   status: string;
   created_at: string;
+  distance_m?: number | null;
 };
 
 function timeAgo(iso: string) {
@@ -31,11 +34,21 @@ function timeAgo(iso: string) {
 export default async function TasksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; category?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    category?: string;
+    lat?: string;
+    lng?: string;
+    sort?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const status = sp.status || "";
   const category = sp.category || "";
+  const lat = sp.lat ? Number(sp.lat) : NaN;
+  const lng = sp.lng ? Number(sp.lng) : NaN;
+  const nearbyActive =
+    sp.sort === "nearby" && Number.isFinite(lat) && Number.isFinite(lng);
 
   const supabase = await createSupabaseServerClient();
   const {
@@ -50,17 +63,35 @@ export default async function TasksPage({
     redirect(`/auth?next=${encodeURIComponent(next)}`);
   }
 
-  let q = supabase
-    .from("tasks")
-    .select("id,title,category,reward_cents,status,created_at")
-    .order("created_at", { ascending: false })
-    .limit(50);
+  let data: TaskListItem[] | null = null;
+  let error: { message: string } | null = null;
 
-  if (status) q = q.eq("status", status);
-  if (category) q = q.ilike("category", `%${category}%`);
+  if (nearbyActive) {
+    const res = await supabase.rpc("list_nearby_tasks", {
+      p_lat: lat,
+      p_lng: lng,
+      p_status: status || null,
+      p_category: category || null,
+      p_limit: 50,
+    });
+    data = res.data as TaskListItem[] | null;
+    error = res.error;
+  } else {
+    let q = supabase
+      .from("tasks")
+      .select("id,title,category,reward_cents,status,created_at")
+      .order("created_at", { ascending: false })
+      .limit(50);
 
-  const { data, error } = await q;
-  const tasks = (data ?? []) as TaskListItem[];
+    if (status) q = q.eq("status", status);
+    if (category) q = q.ilike("category", `%${category}%`);
+
+    const res = await q;
+    data = res.data as TaskListItem[] | null;
+    error = res.error;
+  }
+
+  const tasks = data ?? [];
 
   return (
     <div className="app-shell">
@@ -70,17 +101,28 @@ export default async function TasksPage({
           <div className="eyebrow">Task Market</div>
           <h1 className="page-title mt-2">任务大厅</h1>
           <p className="page-subtitle">
-            {status ? `筛选：${labelStatus(status)}` : "全站任务池"} · 最近 50 条
+            {status ? `筛选：${labelStatus(status)}` : "全站任务池"} ·{" "}
+            {nearbyActive ? "按距离排序" : "最近 50 条"}
           </p>
         </div>
-        <Link href="/tasks/new" className="btn-primary">
-          发布任务
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <NearbyControl active={nearbyActive} />
+          <Link href="/tasks/new" className="btn-primary">
+            发布任务
+          </Link>
+        </div>
       </section>
 
       {/* Filters */}
       <section className="mt-5 rounded-lg border border-slate-200/60 bg-white/70 p-4 shadow-sm ring-1 ring-slate-100/30">
         <form className="flex flex-wrap items-end gap-3">
+          {nearbyActive ? (
+            <>
+              <input type="hidden" name="lat" value={sp.lat} />
+              <input type="hidden" name="lng" value={sp.lng} />
+              <input type="hidden" name="sort" value="nearby" />
+            </>
+          ) : null}
           <div className="min-w-[140px]">
             <label className="text-xs font-medium text-slate-500">状态筛选</label>
             <select
@@ -147,6 +189,11 @@ export default async function TasksPage({
                       <span className={`status-pill ${statusBadgeClass(t.status)}`}>
                         {labelStatus(t.status)}
                       </span>
+                      {nearbyActive && typeof t.distance_m === "number" ? (
+                        <span className="status-pill border-teal-200 bg-teal-50 text-teal-600">
+                          📍 {formatDistance(t.distance_m)}
+                        </span>
+                      ) : null}
                       <span className="text-xs text-slate-400">{timeAgo(t.created_at)}</span>
                     </div>
                   </div>

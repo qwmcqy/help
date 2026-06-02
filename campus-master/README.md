@@ -8,6 +8,7 @@
 - 任务状态机：待接单 → 进行中 → 待验收 → 已完成；任意阶段可进入争议中
 - 资金托管：发布冻结、完成划拨、流水记录（通过 Postgres 函数保证原子性）
 - 实时通知：基于 Supabase Realtime 订阅 `notifications`
+- 地理位置：发布任务时可选记录经纬度并以 GeoHash 存储，任务大厅支持"按距离排序"，优先展示离当前用户更近的任务（Haversine 距离计算）
 - AI 辅助审核（可选）：配置 `OPENAI_API_KEY` 后调用大模型识别任务描述中的违规、暴力、违法交易等风险，并给出风险等级、命中类别和人工复核建议
 
 ## 本地运行
@@ -22,6 +23,7 @@ npm install
 
 - 在 Supabase 创建项目
 - 在 SQL Editor 执行 [supabase/schema.sql](supabase/schema.sql)
+- 若为已建库的旧项目，额外执行 [supabase/patches/20260601_geolocation.sql](supabase/patches/20260601_geolocation.sql) 以启用地理位置功能
 - 复制 `.env.example` 为 `.env.local`，填入：
 	- `NEXT_PUBLIC_SUPABASE_URL`
 	- `NEXT_PUBLIC_SUPABASE_ANON_KEY`

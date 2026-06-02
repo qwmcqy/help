@@ -11,6 +11,7 @@ import {
     TopUpSchema,
 } from "@/lib/validation";
 import { reviewTaskTextWithAI } from "@/lib/ai/reviewTask";
+import { encodeGeohash } from "@/lib/geohash";
 
 export type CreateTaskActionState = {
     formError: string | null;
@@ -86,6 +87,8 @@ export async function createTaskAction(
         description: formData.get("description"),
         category: formData.get("category"),
         rewardCents: formData.get("rewardCents"),
+        lat: formData.get("lat"),
+        lng: formData.get("lng"),
     });
 
     if (!parsed.success) {
@@ -95,6 +98,11 @@ export async function createTaskAction(
             fieldErrors: flattened.fieldErrors,
         };
     }
+
+    const lat = typeof parsed.data.lat === "number" ? parsed.data.lat : null;
+    const lng = typeof parsed.data.lng === "number" ? parsed.data.lng : null;
+    const hasLocation = lat !== null && lng !== null;
+    const geohash = hasLocation ? encodeGeohash(lat, lng) : null;
 
     const supabase = await createSupabaseServerClient();
     const {
@@ -113,6 +121,9 @@ export async function createTaskAction(
         p_description: parsed.data.description,
         p_category: parsed.data.category ?? "",
         p_reward_cents: parsed.data.rewardCents,
+        p_lat: lat,
+        p_lng: lng,
+        p_geohash: geohash,
     });
 
     if (error) {

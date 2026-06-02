@@ -62,6 +62,9 @@ create table if not exists public.tasks (
   category text,
   reward_cents bigint not null check (reward_cents > 0),
   status public.task_status not null default 'open',
+  lat double precision,
+  lng double precision,
+  geohash text,
   evidence_text text,
   evidence_image_paths text[] not null default '{}'::text[],
   accepted_at timestamptz,
@@ -96,6 +99,15 @@ alter table public.tasks
 alter table public.tasks
   add column if not exists cancel_reason text;
 
+alter table public.tasks
+  add column if not exists lat double precision;
+
+alter table public.tasks
+  add column if not exists lng double precision;
+
+alter table public.tasks
+  add column if not exists geohash text;
+
 create table if not exists public.task_violations (
   id uuid primary key default gen_random_uuid(),
   task_id uuid references public.tasks(id) on delete set null,
@@ -112,6 +124,7 @@ create index if not exists task_violations_user_created_idx
 
 create index if not exists tasks_status_idx on public.tasks(status);
 create index if not exists tasks_created_at_idx on public.tasks(created_at desc);
+create index if not exists tasks_geohash_idx on public.tasks(geohash text_pattern_ops);
 
 create table if not exists public.task_state_logs (
   id uuid primary key default gen_random_uuid(),
@@ -614,11 +627,18 @@ end;
 $$;
 
 -- RPC: create task (freeze funds atomically)
+-- Drop the older 4-arg signature so upgraded projects don't end up with an
+-- ambiguous overload alongside the location-aware version below.
+drop function if exists public.create_task(text, text, text, bigint);
+
 create or replace function public.create_task(
   p_title text,
   p_description text,
   p_category text,
-  p_reward_cents bigint
+  p_reward_cents bigint,
+  p_lat double precision default null,
+  p_lng double precision default null,
+  p_geohash text default null
 )
 returns uuid
 language plpgsql
@@ -666,8 +686,18 @@ begin
   insert into public.ledger_entries(user_id, direction, amount_cents, reference_type, note)
   values (uid, 'freeze', p_reward_cents, 'task', '发布任务冻结资金');
 
-  insert into public.tasks(requester_id, title, description, category, reward_cents, status)
-  values (uid, p_title, p_description, nullif(p_category,''), p_reward_cents, 'open')
+  insert into public.tasks(requester_id, title, description, category, reward_cents, status, lat, lng, geohash)
+  values (
+    uid,
+    p_title,
+    p_description,
+    nullif(p_category,''),
+    p_reward_cents,
+    'open',
+    p_lat,
+    p_lng,
+    nullif(p_geohash,'')
+  )
   returning id into v_task_id;
 
   insert into public.ai_audits(task_id, requester_id, risk_level)
@@ -679,6 +709,58 @@ begin
 
   return v_task_id;
 end;
+$$;
+
+-- RPC: list tasks ordered by distance from the caller's position.
+-- Uses Haversine for exact ordering; tasks without coordinates sort last
+-- (then by recency). GeoHash is stored for prefix-based pre-filtering and
+-- can be layered on top of this for larger datasets.
+create or replace function public.list_nearby_tasks(
+  p_lat double precision,
+  p_lng double precision,
+  p_status text default null,
+  p_category text default null,
+  p_limit int default 50
+)
+returns table (
+  id uuid,
+  title text,
+  category text,
+  reward_cents bigint,
+  status public.task_status,
+  created_at timestamptz,
+  lat double precision,
+  lng double precision,
+  distance_m double precision
+)
+language sql
+stable
+as $$
+  select
+    t.id,
+    t.title,
+    t.category,
+    t.reward_cents,
+    t.status,
+    t.created_at,
+    t.lat,
+    t.lng,
+    case
+      when t.lat is null or t.lng is null then null
+      else 2 * 6371000 * asin(
+        sqrt(
+          power(sin(radians(t.lat - p_lat) / 2), 2)
+          + cos(radians(p_lat)) * cos(radians(t.lat))
+            * power(sin(radians(t.lng - p_lng) / 2), 2)
+        )
+      )
+    end as distance_m
+  from public.tasks t
+  where auth.uid() is not null
+    and (p_status is null or p_status = '' or t.status = p_status::public.task_status)
+    and (p_category is null or p_category = '' or t.category ilike '%' || p_category || '%')
+  order by distance_m asc nulls last, t.created_at desc
+  limit greatest(1, least(coalesce(p_limit, 50), 100));
 $$;
 
 -- RPC: accept task

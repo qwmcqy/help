@@ -17,6 +17,88 @@ function SubmitButton() {
   );
 }
 
+type GeoStatus = "idle" | "loading" | "ready" | "error";
+
+function LocationField() {
+  const [status, setStatus] = React.useState<GeoStatus>("idle");
+  const [coords, setCoords] = React.useState<{ lat: number; lng: number } | null>(
+    null,
+  );
+  const [message, setMessage] = React.useState<string>("");
+
+  function locate() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setStatus("error");
+      setMessage("当前浏览器不支持定位，可不填位置直接发布。");
+      return;
+    }
+
+    setStatus("loading");
+    setMessage("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+        setStatus("ready");
+      },
+      (err) => {
+        setStatus("error");
+        setMessage(
+          err.code === err.PERMISSION_DENIED
+            ? "已拒绝定位授权，可不填位置直接发布。"
+            : "获取位置失败，可稍后重试或不填位置。",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  }
+
+  return (
+    <div className="field-label">
+      <span>任务位置（可选）</span>
+      <input type="hidden" name="lat" value={coords?.lat ?? ""} readOnly />
+      <input type="hidden" name="lng" value={coords?.lng ?? ""} readOnly />
+      <div className="mt-1 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={locate}
+          disabled={status === "loading"}
+          className="btn-secondary"
+        >
+          {status === "loading" ? "定位中…" : "📍 获取当前位置"}
+        </button>
+        {status === "ready" && coords ? (
+          <span className="text-sm text-teal-600">
+            已定位 ✓（{coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}）
+          </span>
+        ) : null}
+        {coords ? (
+          <button
+            type="button"
+            onClick={() => {
+              setCoords(null);
+              setStatus("idle");
+              setMessage("");
+            }}
+            className="soft-link text-sm"
+          >
+            清除位置
+          </button>
+        ) : null}
+      </div>
+      {message ? (
+        <p className="mt-1 text-sm text-amber-600">{message}</p>
+      ) : (
+        <p className="mt-1 text-xs text-slate-400">
+          填写位置后，接单方可在任务大厅按距离优先看到你的任务。
+        </p>
+      )}
+    </div>
+  );
+}
+
 const initialState: CreateTaskActionState = {
   formError: null,
   fieldErrors: {},
@@ -100,6 +182,8 @@ export default function NewTaskForm() {
           ) : null}
         </label>
       </div>
+
+      <LocationField />
 
       <SubmitButton />
     </form>
